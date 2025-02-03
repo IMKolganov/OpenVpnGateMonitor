@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: openvpn-backend
+    restart: always
+    networks:
+      - openvpn_network
+    volumes:
+      - /usr/share/GeoIP:/app/GeoIP
+    ports:
+      - "5581:5581"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5581
+      - FRONTEND_URL=http://frontend:5582
+
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: openvpn-frontend
+    restart: always
+    networks:
+      - openvpn_network
+    ports:
+      - "5582:5582"
+    depends_on:
+      - backend
+    environment:
+      - BACKEND_URL=http://backend:5581 
+
+networks:
+  openvpn_network:
+    driver: bridge

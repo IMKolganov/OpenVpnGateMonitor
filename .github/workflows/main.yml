@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted
+    runs-on: [self-hosted, raspberrypi-2]
     name: Build and Deploy on Raspberry Pi
     env:
       ASPNETCORE_ENVIRONMENT: Production

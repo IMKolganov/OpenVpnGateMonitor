@@ -5,7 +5,7 @@ services:
     build: 
       context: ./backend
       dockerfile: Dockerfile
-    container_name: openvpn-backend
+    container_name: open-vpn-gate-monitor-backend
     restart: always
     networks:
       - openvpn_network
@@ -21,7 +21,7 @@ services:
     build: 
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: openvpn-frontend
+    container_name: open-vpn-gate-monitor-frontend
     restart: always
     networks:
       - openvpn_network

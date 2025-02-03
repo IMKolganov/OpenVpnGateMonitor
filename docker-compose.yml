@@ -10,7 +10,7 @@ services:
     networks:
       - openvpn_network
     volumes:
-      - /usr/share/GeoIP:/app/GeoIP
+      - /usr/share/GeoIP/GeoLite2-City.mmdb:/app/GeoLite2-City.mmdb
     ports:
       - "5581:5581"
     environment:

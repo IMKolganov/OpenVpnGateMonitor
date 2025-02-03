@@ -1,0 +1,68 @@
+name: Build and Deploy OpenVPNGateMonitor develop
+  
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    name: Build and Deploy on Raspberry Pi
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Use existing configuration files
+        run: |
+          echo "Copying configuration files..."
+          cp /home/rackot/configs/OpenVPNGateMonitor/appsettings.json ./appsettings.json
+          cp /home/rackot/configs/OpenVPNGateMonitor/appsettings.Development.json ./appsettings.Development.json
+          cp /home/rackot/certs/datagatetgbot.pem ./datagatetgbot.pem
+          cp /home/rackot/certs/datagatetgbot.key ./datagatetgbot.key
+
+      - name: Verify files
+        run: |
+          echo "Verifying required files..."
+          for file in appsettings.json appsettings.Development.json datagatetgbot.pem datagatetgbot.key; do
+            if [ -s ./$file ]; then
+              echo "$file is present and not empty.";
+            else
+              echo "ERROR: $file is missing or empty!";
+              exit 1;
+            fi
+          done
+          echo "✅ All required files are present."
+
+      - name: Build Docker image
+        run: |
+          echo "Building Docker image..."
+          docker build -t openvpngatemonitor-develop -f OpenVPNGateMonitor/Dockerfile-develop .
+
+      - name: Verify Docker image
+        run: |
+          echo "Listing Docker images:"
+          docker images | grep openvpngatemonitor-develop || echo "ERROR: Image openvpngatemonitor-develop not found"
+
+      - name: Deploy Docker container
+        run: |
+          echo "Stopping and removing old container if exists..."
+          docker stop openvpngatemonitor_develop_container || true
+          docker rm openvpngatemonitor_develop_container || true
+          echo "Starting new container..."
+          docker run -d --name openvpngatemonitor_develop_container \
+          -p 88:88 \
+          -e ASPNETCORE_ENVIRONMENT=Development \
+          -v $PWD/appsettings.json:/app/appsettings.json \
+          -v $PWD/appsettings.Development.json:/app/appsettings.Development.json \
+          -v $PWD/datagatetgbot.pem:/app/datagatetgbot.pem \
+          -v $PWD/datagatetgbot.key:/app/datagatetgbot.key \
+          -v $PWD/bot.gif:/app/bot.gif \
+          -v /etc/openvpn/easy-rsa:/etc/openvpn/easy-rsa \
+          -v /etc/openvpn/clients:/etc/openvpn/clients \
+          -v /etc/openvpn/crl.pem:/etc/openvpn/crl.pem \
+          -v /var/log/openvpn-status.log:/var/log/openvpn-status.log \
+          openvpngatemonitor-develop

@@ -13,10 +13,23 @@ jobs:
       ASPNETCORE_ENVIRONMENT: Production
 
     steps:
-      - name: Checkout repository
+      - name: Checkout full repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          submodules: true
+          lfs: true
+          persist-credentials: false
+
+      - name: Debug working directory
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Listing files:"
+          ls -lah
+          echo "Listing backend:"
+          ls -lah backend/
+          echo "Listing frontend:"
+          ls -lah frontend/
 
       - name: Use existing configuration files
         run: |

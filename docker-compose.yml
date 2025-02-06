@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   backend:
-    build: 
+    build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: open-vpn-gate-monitor-backend
@@ -22,17 +22,9 @@ services:
       - /etc/openvpn/easy-rsa/pki/index.txt:/etc/openvpn/easy-rsa/pki/index.txt:ro
     ports:
       - "5581:5581"
-      - "4024:4024"
     environment:
-      - DOTNET_USE_POLLING_FILE_WATCHER=1
-      - DOTNET_MODIFIABLE_ASSEMBLIES=Debug
-      - DOTNET_DEBUG=1
-      - ASPNETCORE_URLS=http://0.0.0.0:5581
       - FRONTEND_URL=http://frontend:5582
       - DOTNET_ENVIRONMENT=Debug
-    command: >
-      sh -c "/vsdbg/vsdbg --interpreter=vscode --server --port 4024 & exec dotnet OpenVPNGateMonitor.dll"
-
   frontend:
     build: 
       context: ./frontend

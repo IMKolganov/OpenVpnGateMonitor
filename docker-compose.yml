@@ -29,11 +29,9 @@ services:
       - DOTNET_DEBUG=1
       - ASPNETCORE_URLS=http://0.0.0.0:5581
       - FRONTEND_URL=http://frontend:5582
-    command: 
-      [
-        "sh", "-c",
-        "/vsdbg/vsdbg --interpreter=vscode & dotnet OpenVPNGateMonitor.dll --server.urls http://0.0.0.0:5581"
-      ]
+    command: >
+      sh -c "/vsdbg/vsdbg --interpreter=vscode & dotnet OpenVPNGateMonitor.dll --server.urls http://0.0.0.0:5581"
+
   frontend:
     build: 
       context: ./frontend

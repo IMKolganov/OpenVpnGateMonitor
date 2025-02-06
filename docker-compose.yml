@@ -22,15 +22,15 @@ services:
       - /etc/openvpn/easy-rsa/pki/index.txt:/etc/openvpn/easy-rsa/pki/index.txt
     ports:
       - "5581:5581"
-      - "4712:4711"
+      - "4712:4712"
     environment:
       - DOTNET_USE_POLLING_FILE_WATCHER=1
       - DOTNET_MODIFIABLE_ASSEMBLIES=Debug
       - DOTNET_DEBUG=1
-      - ASPNETCORE_URLS=http://0.0.0.0:5581
+      - ASPNETCORE_URLS=http://0.0.0.0:5581;http://0.0.0.0:4712
       - FRONTEND_URL=http://frontend:5582
     command: >
-      sh -c "/vsdbg/vsdbg --interpreter=vscode & exec dotnet OpenVPNGateMonitor.dll --server.urls http://0.0.0.0:5581"
+      sh -c "trap 'kill %1' SIGINT SIGTERM; /vsdbg/vsdbg --interpreter=vscode & exec dotnet OpenVPNGateMonitor.dll --server.urls http://0.0.0.0:4712"
 
   frontend:
     build: 

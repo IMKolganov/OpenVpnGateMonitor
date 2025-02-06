@@ -10,8 +10,11 @@ services:
     networks:
       - openvpn_network
     volumes:
+      - /home/rackot/configs/OpenVPNGateMonitor/appsettings.json:/backend/appsettings.json
+      - /home/rackot/configs/OpenVPNGateMonitor/appsettings.Development.json:/backend/appsettings.Development.json
+      - /home/rackot/certs/datagatetgbot.pem:/backend/datagatetgbot.pem
+      - /home/rackot/certs/datagatetgbot.key:/backend/datagatetgbot.key
       - /usr/share/GeoIP/GeoLite2-City.mmdb:/app/GeoLite2-City.mmdb
-
       - /etc/openvpn/easy-rsa:/etc/openvpn/easy-rsa
       - /etc/openvpn/clients:/etc/openvpn/clients
       - /etc/openvpn/crl.pem:/etc/openvpn/crl.pem

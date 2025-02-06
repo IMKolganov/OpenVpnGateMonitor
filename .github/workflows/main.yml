@@ -36,27 +36,6 @@ jobs:
           echo "Listing frontend:"
           ls -lah frontend/
 
-      - name: Use existing configuration files
-        run: |
-          echo "Copying configuration files..."
-          cp /home/rackot/configs/OpenVPNGateMonitor/appsettings.json ./backend/appsettings.json
-          cp /home/rackot/configs/OpenVPNGateMonitor/appsettings.Development.json ./backend/appsettings.Development.json
-          cp /home/rackot/certs/datagatetgbot.pem ./backend/datagatetgbot.pem
-          cp /home/rackot/certs/datagatetgbot.key ./backend/datagatetgbot.key
-
-      - name: Verify required files
-        run: |
-          echo "Verifying required files..."
-          for file in backend/appsettings.json backend/appsettings.Development.json backend/datagatetgbot.pem backend/datagatetgbot.key; do
-            if [ -s ./$file ]; then
-              echo "$file is present and not empty."
-            else
-              echo "ERROR: $file is missing or empty!"
-              exit 1
-            fi
-          done
-          echo "✅ All required files are present."
-
       - name: Build and start services with Docker Compose
         run: |
           echo "Stopping and removing old containers..."

@@ -8,9 +8,9 @@
     "DOTNET_USE_POLLING_FILE_WATCHER": "1",
     "DOTNET_MODIFIABLE_ASSEMBLIES": "Debug"
   },
+  "postCreateCommand": "git submodule update --init --recursive && dotnet restore",
   "forwardPorts": [5581, 4024],
   "extensions": [
     "ms-dotnettools.csharp"
-  ],
-  "postCreateCommand": "dotnet restore"
+  ]
 }

@@ -1,0 +1,16 @@
+{
+  "name": "OpenVPN Gate Monitor Dev Container",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "backend",
+  "workspaceFolder": "/app",
+  "remoteUser": "root",
+  "containerEnv": {
+    "DOTNET_USE_POLLING_FILE_WATCHER": "1",
+    "DOTNET_MODIFIABLE_ASSEMBLIES": "Debug"
+  },
+  "forwardPorts": [5581, 4024],
+  "extensions": [
+    "ms-dotnettools.csharp"
+  ],
+  "postCreateCommand": "dotnet restore"
+}

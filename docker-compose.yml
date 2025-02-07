@@ -9,6 +9,7 @@ services:
     restart: always
     networks:
       - openvpn_network
+    user: "1000:1000"
     volumes:
       - /home/rackot/configs/OpenVPNGateMonitor/appsettings.json:/app/appsettings.json
       - /home/rackot/configs/OpenVPNGateMonitor/appsettings.Development.json:/app/appsettings.Development.json

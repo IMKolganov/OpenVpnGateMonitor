@@ -19,7 +19,7 @@ services:
       - /etc/openvpn/clients:/etc/openvpn/clients
       - /etc/openvpn/crl.pem:/etc/openvpn/crl.pem
       - /var/log/openvpn-status.log:/var/log/openvpn-status.log:ro
-      - /etc/openvpn/easy-rsa/pki/index.txt:/etc/openvpn/easy-rsa/pki/index.txt:ro
+      - /etc/openvpn/easy-rsa/pki/index.txt:/etc/openvpn/easy-rsa/pki/index.txt
     ports:
       - "5581:5581"
     environment:

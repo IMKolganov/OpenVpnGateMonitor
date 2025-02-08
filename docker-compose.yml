@@ -45,6 +45,7 @@ services:
       - NET_ADMIN
     volumes:
       - openvpn_data:/etc/openvpn
+      - /home/rackot/configs/server.conf:/etc/openvpn/server.conf
     ports:
       - "1194:1194/udp"
     restart: unless-stopped

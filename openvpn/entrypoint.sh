@@ -15,11 +15,11 @@ if [ ! -d "$EASYRSA_DIR/pki" ]; then
     cp pki/ca.crt pki/private/ca.key pki/issued/server.crt pki/private/server.key pki/dh.pem /etc/openvpn/
 fi
 
-truncate -s 0 /etc/openvpn/openvpn.log
-truncate -s 0 /etc/openvpn/openvpn-status.log
-chmod 777 /etc/openvpn/openvpn.log
-chmod 777 /etc/openvpn/openvpn-status.log
+truncate -s 0 /mnt/openvpn.log
+truncate -s 0 /mnt/openvpn-status.log
+chmod 777 /mnt/openvpn.log
+chmod 777 /mnt/openvpn-status.log
 
-tail -F /etc/openvpn/openvpn.log /etc/openvpn/openvpn-status.log &
+tail -F /mnt/openvpn.log /mnt/openvpn-status.log &
 
 exec openvpn --config /etc/openvpn/server.conf

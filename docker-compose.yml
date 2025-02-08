@@ -9,6 +9,7 @@ services:
     restart: always
     networks:
       - openvpn_network
+      - backend_network
     volumes:
       - openvpn_data:/mnt
       - /home/rackot/configs/OpenVPNGateMonitor/appsettings.json:/app/appsettings.json
@@ -42,6 +43,9 @@ services:
       context: ./openvpn
       dockerfile: Dockerfile
     container_name: openvpn
+    restart: unless-stopped
+    networks:
+      - backend_network
     cap_add:
       - NET_ADMIN
     devices:
@@ -51,11 +55,12 @@ services:
       - /home/rackot/configs/server.conf:/mnt/server.conf
     ports:
       - "1195:1195/udp"
-    restart: unless-stopped
 
 volumes:
   openvpn_data:
 
 networks:
   openvpn_network:
+    driver: bridge
+  backend_network:
     driver: bridge

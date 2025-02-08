@@ -15,16 +15,12 @@ services:
       - /home/rackot/certs/datagatetgbot.pem:/app/datagatetgbot.pem
       - /home/rackot/certs/datagatetgbot.key:/app/datagatetgbot.key
       - /usr/share/GeoIP/GeoLite2-City.mmdb:/app/GeoLite2-City.mmdb
-      - /etc/openvpn/easy-rsa:/etc/openvpn/easy-rsa
-      - /etc/openvpn/clients:/etc/openvpn/clients
-      - /etc/openvpn/crl.pem:/etc/openvpn/crl.pem
-      - /var/log/openvpn-status.log:/var/log/openvpn-status.log:ro
-      - /etc/openvpn/easy-rsa/pki/index.txt:/etc/openvpn/easy-rsa/pki/index.txt
     ports:
       - "5581:5581"
     environment:
       - FRONTEND_URL=http://frontend:5582
       - DOTNET_ENVIRONMENT=Debug
+
   frontend:
     build: 
       context: ./frontend
@@ -39,8 +35,11 @@ services:
       - backend
     environment:
       - BACKEND_URL=http://backend:5581
+
   openvpn:
-    image: kylemanna/openvpn
+    build:
+      context: ./openvpn
+      dockerfile: Dockerfile
     container_name: openvpn
     cap_add:
       - NET_ADMIN

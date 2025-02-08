@@ -47,7 +47,7 @@ services:
       - openvpn_data:/etc/openvpn
       - /home/rackot/configs/server.conf:/etc/openvpn/server.conf
     ports:
-      - "1194:1194/udp"
+      - "1195:1195/udp"
     restart: unless-stopped
 
 volumes:

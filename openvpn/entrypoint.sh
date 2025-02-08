@@ -1,7 +1,13 @@
 #!/bin/bash
 set -e
 
+echo "===== STARTING OPENVPN CONTAINER ====="
+
 EASYRSA_DIR="/mnt/easy-rsa"
+
+echo "Checking contents of /mnt before starting..."
+ls -l /mnt
+ls -l /mnt/easy-rsa/pki
 
 if [ ! -d "$EASYRSA_DIR/pki" ]; then
     echo "Initializing new PKI..."
@@ -15,15 +21,21 @@ if [ ! -d "$EASYRSA_DIR/pki" ]; then
     cp pki/ca.crt pki/private/ca.key pki/issued/server.crt pki/private/server.key pki/dh.pem /etc/openvpn/
 fi
 
-cat /mnt/server.conf
-cat /mnt/easy-rsa/pki/ta.key
+echo "===== CONFIGURATION FILES ====="
+cat /mnt/server.conf || echo "server.conf NOT FOUND!"
+cat /mnt/easy-rsa/pki/ta.key || echo "ta.key NOT FOUND!"
 
+echo "Clearing logs..."
 truncate -s 0 /mnt/openvpn.log
 truncate -s 0 /mnt/openvpn-status.log
 chmod 777 /mnt/openvpn.log
 chmod 777 /mnt/openvpn-status.log
 
-tail -F /mnt/openvpn.log /mnt/openvpn-status.log &
+echo "===== FINAL CHECK BEFORE STARTING OPENVPN ====="
+ls -l /mnt
+ls -l /mnt/easy-rsa/pki
 
+echo "Starting OpenVPN..."
+tail -F /mnt/openvpn.log /mnt/openvpn-status.log &
 exec openvpn --config /mnt/server.conf &
 tail -F /mnt/openvpn.log /mnt/openvpn-status.log

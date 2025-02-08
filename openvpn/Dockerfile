@@ -1,4 +1,4 @@
-FROM ubuntu:arm64
+FROM ubuntu:latest
 
 RUN apt update && apt install -y openvpn easy-rsa && rm -rf /var/lib/apt/lists/*
 

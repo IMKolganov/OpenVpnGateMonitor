@@ -43,6 +43,8 @@ services:
     container_name: openvpn
     cap_add:
       - NET_ADMIN
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
     volumes:
       - openvpn_data:/mnt
       - /home/rackot/configs/server.conf:/mnt/server.conf

@@ -38,7 +38,20 @@ services:
     depends_on:
       - backend
     environment:
-      - BACKEND_URL=http://backend:5581 
+      - BACKEND_URL=http://backend:5581
+  openvpn:
+    image: kylemanna/openvpn
+    container_name: openvpn
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - openvpn_data:/etc/openvpn
+    ports:
+      - "1194:1194/udp"
+    restart: unless-stopped
+
+volumes:
+  openvpn_data:
 
 networks:
   openvpn_network:

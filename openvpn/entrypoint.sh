@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-EASYRSA_DIR="/etc/openvpn/easy-rsa"
+EASYRSA_DIR="/mnt/easy-rsa"
 
 if [ ! -d "$EASYRSA_DIR/pki" ]; then
     echo "Initializing new PKI..."

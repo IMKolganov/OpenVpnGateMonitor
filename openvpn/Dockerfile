@@ -2,7 +2,7 @@ FROM ubuntu:latest
 
 RUN apt update && apt install -y openvpn easy-rsa && rm -rf /var/lib/apt/lists/*
 
-VOLUME ["/etc/openvpn"]
+VOLUME ["/mnt"]
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

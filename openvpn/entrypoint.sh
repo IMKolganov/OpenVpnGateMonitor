@@ -3,8 +3,8 @@ set -e
 
 EASYRSA_DIR="/etc/openvpn/easy-rsa"
 
-if [ ! -f "$EASYRSA_DIR/pki/ca.crt" ]; then
-    echo "No certificates found, generating new ones..."
+if [ ! -d "$EASYRSA_DIR/pki" ]; then
+    echo "Initializing new PKI..."
     make-cadir $EASYRSA_DIR
     cd $EASYRSA_DIR
     ./easyrsa init-pki

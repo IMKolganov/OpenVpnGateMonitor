@@ -44,8 +44,6 @@ services:
       dockerfile: Dockerfile
     container_name: openvpn
     restart: unless-stopped
-    networks:
-      - backend_network
     cap_add:
       - NET_ADMIN
     devices:

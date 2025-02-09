@@ -3,6 +3,11 @@ set -e
 
 echo "===== STARTING OPENVPN CONTAINER ====="
 
+iptables -P FORWARD ACCEPT
+iptables -A FORWARD -i tun0 -j ACCEPT
+iptables -A FORWARD -o tun0 -j ACCEPT
+iptables -t nat -A POSTROUTING -s 10.51.28.0/24 -o eth0 -j MASQUERADE
+
 EASYRSA_DIR="/mnt/easy-rsa"
 
 echo "Checking contents of /mnt before starting..."

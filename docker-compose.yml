@@ -53,6 +53,7 @@ services:
       - /home/rackot/configs/server.conf:/mnt/server.conf
     ports:
       - "1195:1195/udp"
+      - "5550:5550"
 
 volumes:
   openvpn_data:

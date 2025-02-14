@@ -17,6 +17,7 @@ services:
       - /home/rackot/certs/datagatetgbot.pem:/app/datagatetgbot.pem
       - /home/rackot/certs/datagatetgbot.key:/app/datagatetgbot.key
       - /usr/share/GeoIP/GeoLite2-City.mmdb:/app/GeoLite2-City.mmdb
+      - /etc/openvpn:/etc/openvpn
     ports:
       - "5581:5581"
     environment:

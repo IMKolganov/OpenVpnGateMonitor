@@ -17,13 +17,13 @@ services:
     ports:
       - "5591:5591"
     depends_on:
-      - postgres
+      - postgres_backend
     environment:
       - FRONTEND_URL=http://frontend:5582
       - DOTNET_ENVIRONMENT=Debug
-      - DB_CONNECTION_STRING=Host=postgres;Port=5432;Database=openvpn;Username=openvpn_user;Password=securepassword
-      - DB_DEFAULT_SCHEMA=public
-      - DB_MIGRATION_TABLE=__EFMigrationsHistory
+      - DB_CONNECTION_STRING=Host=postgres_backend;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend
+      - DB_DEFAULT_SCHEMA=xgb_dashopnvpn
+      - DB_MIGRATION_TABLE=__EFMigrationsHistoryBackend
 
   frontend:
     build: 
@@ -42,7 +42,7 @@ services:
 
   telegrambot:
     build: 
-      context: ./DataGateVPNBot
+      context: ./telegrambot
       dockerfile: Dockerfile
       args:
         TARGETARCH: ${TARGETARCH:?TARGETARCH is required}
@@ -51,20 +51,19 @@ services:
     restart: always
     networks:
       - backend_network
-    env_file:
-      - .env.local
+    depends_on:
+      - postgres_telegrambot
     environment:
-      - DB_CONNECTION_STRING=Host=postgres;Port=5432;Database=openvpn;Username=openvpn_user;Password=securepassword
-      - DB_DEFAULT_SCHEMA=public
-      - DB_MIGRATION_TABLE=__EFMigrationsHistory
+      - DB_CONNECTION_STRING=Host=postgres_telegrambot;Port=5432;Database=datagate_telegrambot;Username=telegrambot_user;Password=securepassword_telegrambot
+      - DB_DEFAULT_SCHEMA=xgb_botvpndev
+      - DB_MIGRATION_TABLE=__EFMigrationsHistoryTelegramBot
       - DEPLOY_ENV=${DEPLOY_ENV:?DEPLOY_ENV is required}
       - PORT=${PORT:?PORT is required}
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT is required}
     volumes:
       - openvpn_data:/mnt
-      - ./DataGateVPNBot/appsettings.json:/app/appsettings.json
-      - ./DataGateVPNBot/appsettings.Development.json:/app/appsettings.Development.json
-
+      - ./telegrambot/appsettings.json:/app/appsettings.json
+      - ./telegrambot/appsettings.Development.json:/app/appsettings.Development.json
 
   openvpn:
     build:
@@ -82,24 +81,40 @@ services:
       - "1192:1192/udp"
       - "5092:5092"
 
-  postgres:
+  postgres_backend:
     image: postgres:latest
-    container_name: datagate_postgres
+    container_name: datagate_postgres_backend
     restart: always
     environment:
-      - POSTGRES_DB=openvpn
-      - POSTGRES_USER=openvpn_user
-      - POSTGRES_PASSWORD=securepassword
+      - POSTGRES_DB=datagate_bakend
+      - POSTGRES_USER=backend_user
+      - POSTGRES_PASSWORD=securepassword_backend
     networks:
       - backend_network
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_backend:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
+  postgres_telegrambot:
+    image: postgres:latest
+    container_name: datagate_postgres_telegrambot
+    restart: always
+    environment:
+      - POSTGRES_DB=datagate_telegrambot
+      - POSTGRES_USER=telegrambot_user
+      - POSTGRES_PASSWORD=securepassword_telegrambot
+    networks:
+      - backend_network
+    volumes:
+      - postgres_data_telegrambot:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
 volumes:
   openvpn_data:
-  postgres_data:
+  postgres_data_backend:
+  postgres_data_telegrambot:
 
 networks:
   openvpn_network:

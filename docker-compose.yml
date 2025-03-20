@@ -14,12 +14,8 @@ services:
       - openvpn_data:/mnt
       - /home/rackot/configs/OpenVPNGateMonitor/appsettings.json:/app/appsettings.json
       - /home/rackot/configs/OpenVPNGateMonitor/appsettings.Development.json:/app/appsettings.Development.json
-      - /home/rackot/certs/datagatetgbot.pem:/app/datagatetgbot.pem
-      - /home/rackot/certs/datagatetgbot.key:/app/datagatetgbot.key
-      - /usr/share/GeoIP/GeoLite2-City.mmdb:/app/GeoLite2-City.mmdb
-      - /etc/openvpn:/etc/openvpn
     ports:
-      - "5581:5581"
+      - "5591:5591"
     environment:
       - FRONTEND_URL=http://frontend:5582
       - DOTNET_ENVIRONMENT=Debug
@@ -33,7 +29,7 @@ services:
     networks:
       - openvpn_network
     ports:
-      - "5582:5582"
+      - "5592:5592"
     depends_on:
       - backend
     environment:
@@ -53,8 +49,8 @@ services:
       - openvpn_data:/mnt
       - /home/rackot/configs/server.conf:/mnt/server.conf
     ports:
-      - "1195:1195/udp"
-      - "5550:5550"
+      - "1192:1192/udp"
+      - "5092:5092"
 
 volumes:
   openvpn_data:

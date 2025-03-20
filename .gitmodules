@@ -4,3 +4,6 @@
 [submodule "frontend"]
 	path = frontend
 	url = https://github.com/IMKolganov/OpenVpnGateMonitorFrontend
+[submodule "DataGateVPNBot"]
+	path = DataGateVPNBot
+	url = https://github.com/IMKolganov/DataGateVPNBot

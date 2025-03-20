@@ -12,13 +12,17 @@ services:
       - backend_network
     volumes:
       - openvpn_data:/mnt
-      - /home/rackot/configs/OpenVPNGateMonitor/appsettings.json:/app/appsettings.json
-      - /home/rackot/configs/OpenVPNGateMonitor/appsettings.Development.json:/app/appsettings.Development.json
     ports:
       - "5591:5591"
     environment:
       - FRONTEND_URL=http://frontend:5582
       - DOTNET_ENVIRONMENT=Debug
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=openvpn
+      - POSTGRES_USER=openvpn_user
+      - POSTGRES_PASSWORD=securepassword
+    depends_on:
+      - postgres
 
   frontend:
     build: 
@@ -35,6 +39,15 @@ services:
     environment:
       - BACKEND_URL=http://backend:5581
 
+  telegrambot:
+    build: 
+      context: ./DataGateVPNBot
+      dockerfile: Dockerfile
+    container_name: open-vpn-gate-monitor-telegrambot
+    restart: always
+    networks:
+      - backend_network
+
   openvpn:
     build:
       context: ./openvpn
@@ -47,13 +60,28 @@ services:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
       - openvpn_data:/mnt
-      - /home/rackot/configs/server.conf:/mnt/server.conf
     ports:
       - "1192:1192/udp"
       - "5092:5092"
 
+  postgres:
+    image: postgres:latest
+    container_name: datagate_postgres
+    restart: always
+    environment:
+      - POSTGRES_DB=openvpn
+      - POSTGRES_USER=openvpn_user
+      - POSTGRES_PASSWORD=securepassword
+    networks:
+      - backend_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
 volumes:
   openvpn_data:
+  postgres_data:
 
 networks:
   openvpn_network:

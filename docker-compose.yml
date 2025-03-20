@@ -12,17 +12,18 @@ services:
       - backend_network
     volumes:
       - openvpn_data:/mnt
+      - ./backend/appsettings.json:/app/appsettings.json
+      - ./backend/appsettings.Development.json:/app/appsettings.Development.json
     ports:
       - "5591:5591"
+    depends_on:
+      - postgres
     environment:
       - FRONTEND_URL=http://frontend:5582
       - DOTNET_ENVIRONMENT=Debug
-      - POSTGRES_HOST=postgres
-      - POSTGRES_DB=openvpn
-      - POSTGRES_USER=openvpn_user
-      - POSTGRES_PASSWORD=securepassword
-    depends_on:
-      - postgres
+      - DB_CONNECTION_STRING=Host=postgres;Port=5432;Database=openvpn;Username=openvpn_user;Password=securepassword
+      - DB_DEFAULT_SCHEMA=public
+      - DB_MIGRATION_TABLE=__EFMigrationsHistory
 
   frontend:
     build: 
@@ -43,10 +44,27 @@ services:
     build: 
       context: ./DataGateVPNBot
       dockerfile: Dockerfile
+      args:
+        TARGETARCH: ${TARGETARCH:?TARGETARCH is required}
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:?BUILD_CONFIGURATION is required}
     container_name: open-vpn-gate-monitor-telegrambot
     restart: always
     networks:
       - backend_network
+    env_file:
+      - .env.local
+    environment:
+      - DB_CONNECTION_STRING=Host=postgres;Port=5432;Database=openvpn;Username=openvpn_user;Password=securepassword
+      - DB_DEFAULT_SCHEMA=public
+      - DB_MIGRATION_TABLE=__EFMigrationsHistory
+      - DEPLOY_ENV=${DEPLOY_ENV:?DEPLOY_ENV is required}
+      - PORT=${PORT:?PORT is required}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT is required}
+    volumes:
+      - openvpn_data:/mnt
+      - ./DataGateVPNBot/appsettings.json:/app/appsettings.json
+      - ./DataGateVPNBot/appsettings.Development.json:/app/appsettings.Development.json
+
 
   openvpn:
     build:

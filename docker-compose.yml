@@ -15,7 +15,7 @@ services:
       - ./backend/appsettings.json:/app/appsettings.json
       - ./backend/appsettings.Development.json:/app/appsettings.Development.json
     ports:
-      - "5591:5591"
+      - "5581:5581"
     depends_on:
       - postgres_backend
     environment:
@@ -34,7 +34,7 @@ services:
     networks:
       - openvpn_network
     ports:
-      - "5592:5592"
+      - "5582:5582"
     depends_on:
       - backend
     environment:

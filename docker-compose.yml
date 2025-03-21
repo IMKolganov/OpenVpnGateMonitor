@@ -64,6 +64,8 @@ services:
       - openvpn_data:/mnt
       - ./telegrambot/appsettings.json:/app/appsettings.json
       - ./telegrambot/appsettings.Development.json:/app/appsettings.Development.json
+      - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem
+      - ./telegrambot/datagatetgbot.key:/app/datagatetgbot.key
 
   openvpn:
     build:

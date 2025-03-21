@@ -67,21 +67,47 @@ services:
       - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem
       - ./telegrambot/datagatetgbot.key:/app/datagatetgbot.key
 
-  openvpn:
+  openvpn_udp:
     build:
       context: ./openvpn
       dockerfile: Dockerfile
-    container_name: openvpn
+    container_name: openvpn_udp
     restart: unless-stopped
+    networks:
+      - backend_network
     cap_add:
       - NET_ADMIN
     devices:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
-      - openvpn_data:/mnt
+      - ./openvpn-data-udp:/mnt
     ports:
-      - "1192:1192/udp"
-      - "5092:5092"
+      - "1194:1194/udp"
+    environment:
+      - PORT=1194
+      - PROTO=udp
+      - MGMT_PORT=5092
+
+  openvpn_tcp:
+    build:
+      context: ./openvpn
+      dockerfile: Dockerfile
+    container_name: openvpn_tcp
+    restart: unless-stopped
+    networks:
+      - backend_network
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    volumes:
+      - ./openvpn-data-tcp:/mnt
+    ports:
+      - "1195:1195"
+    environment:
+      - PORT=1195
+      - PROTO=tcp
+      - MGMT_PORT=5093
 
   postgres_backend:
     image: postgres:latest

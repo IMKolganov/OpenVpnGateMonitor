@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+PORT=${PORT:-1194}
+PROTO=${PROTO:-udp}
+MGMT_PORT=${MGMT_PORT:-5092}
+
+
 echo "===== STARTING OPENVPN CONTAINER ====="
 
 # Enable IP forwarding
@@ -62,8 +67,8 @@ done
 if [ ! -f /mnt/server.conf ]; then
     echo "Generating default server.conf..."
     cat <<EOF > /mnt/server.conf
-port 1194
-proto udp
+port $PORT
+proto $PROTO
 dev tun
 
 ca /etc/openvpn/ca.crt
@@ -100,6 +105,9 @@ status /mnt/openvpn-status.log
 status-version 3
 log /mnt/openvpn.log
 log-append /mnt/openvpn.log
+
+management 0.0.0.0 $MGMT_PORT
+
 verb 4
 EOF
 fi

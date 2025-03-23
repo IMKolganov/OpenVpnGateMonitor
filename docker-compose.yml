@@ -12,17 +12,18 @@ services:
       - backend_network
     volumes:
       - openvpn_data:/mnt
-      - /home/rackot/configs/OpenVPNGateMonitor/appsettings.json:/app/appsettings.json
-      - /home/rackot/configs/OpenVPNGateMonitor/appsettings.Development.json:/app/appsettings.Development.json
-      - /home/rackot/certs/datagatetgbot.pem:/app/datagatetgbot.pem
-      - /home/rackot/certs/datagatetgbot.key:/app/datagatetgbot.key
-      - /usr/share/GeoIP/GeoLite2-City.mmdb:/app/GeoLite2-City.mmdb
-      - /etc/openvpn:/etc/openvpn
+      - ./backend/appsettings.json:/app/appsettings.json
+      - ./backend/appsettings.Development.json:/app/appsettings.Development.json
     ports:
       - "5581:5581"
+    depends_on:
+      - postgres_backend
     environment:
       - FRONTEND_URL=http://frontend:5582
       - DOTNET_ENVIRONMENT=Debug
+      - DB_CONNECTION_STRING=Host=postgres_backend;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend
+      - DB_DEFAULT_SCHEMA=xgb_dashopnvpn
+      - DB_MIGRATION_TABLE=__EFMigrationsHistoryBackend
 
   frontend:
     build: 
@@ -39,25 +40,109 @@ services:
     environment:
       - BACKEND_URL=http://backend:5581
 
-  openvpn:
+  telegrambot:
+    build: 
+      context: ./telegrambot
+      dockerfile: Dockerfile
+      args:
+        TARGETARCH: ${TARGETARCH:?TARGETARCH is required}
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:?BUILD_CONFIGURATION is required}
+    container_name: open-vpn-gate-monitor-telegrambot
+    restart: always
+    networks:
+      - backend_network
+    depends_on:
+      - postgres_telegrambot
+    environment:
+      - DB_CONNECTION_STRING=Host=postgres_telegrambot;Port=5432;Database=datagate_telegrambot;Username=telegrambot_user;Password=securepassword_telegrambot
+      - DB_DEFAULT_SCHEMA=xgb_botvpndev
+      - DB_MIGRATION_TABLE=__EFMigrationsHistoryTelegramBot
+      - DEPLOY_ENV=${DEPLOY_ENV:?DEPLOY_ENV is required}
+      - PORT=${PORT:?PORT is required}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT is required}
+    volumes:
+      - openvpn_data:/mnt
+      - ./telegrambot/appsettings.json:/app/appsettings.json
+      - ./telegrambot/appsettings.Development.json:/app/appsettings.Development.json
+      - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem
+      - ./telegrambot/datagatetgbot.key:/app/datagatetgbot.key
+
+  openvpn_udp:
     build:
       context: ./openvpn
       dockerfile: Dockerfile
-    container_name: openvpn
+    container_name: openvpn_udp
     restart: unless-stopped
+    networks:
+      - backend_network
     cap_add:
       - NET_ADMIN
     devices:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
-      - openvpn_data:/mnt
-      - /home/rackot/configs/server.conf:/mnt/server.conf
+      - ./openvpn-data-udp:/mnt
     ports:
-      - "1195:1195/udp"
-      - "5550:5550"
+      - "1194:1194/udp"
+    environment:
+      - PORT=1194
+      - PROTO=udp
+      - MGMT_PORT=5092
+
+  openvpn_tcp:
+    build:
+      context: ./openvpn
+      dockerfile: Dockerfile
+    container_name: openvpn_tcp
+    restart: unless-stopped
+    networks:
+      - backend_network
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    volumes:
+      - ./openvpn-data-tcp:/mnt
+    ports:
+      - "1195:1195"
+    environment:
+      - PORT=1195
+      - PROTO=tcp
+      - MGMT_PORT=5093
+
+  postgres_backend:
+    image: postgres:latest
+    container_name: datagate_postgres_backend
+    restart: always
+    environment:
+      - POSTGRES_DB=datagate_bakend
+      - POSTGRES_USER=backend_user
+      - POSTGRES_PASSWORD=securepassword_backend
+    networks:
+      - backend_network
+    volumes:
+      - postgres_data_backend:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  postgres_telegrambot:
+    image: postgres:latest
+    container_name: datagate_postgres_telegrambot
+    restart: always
+    environment:
+      - POSTGRES_DB=datagate_telegrambot
+      - POSTGRES_USER=telegrambot_user
+      - POSTGRES_PASSWORD=securepassword_telegrambot
+    networks:
+      - backend_network
+    volumes:
+      - postgres_data_telegrambot:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
 
 volumes:
   openvpn_data:
+  postgres_data_backend:
+  postgres_data_telegrambot:
 
 networks:
   openvpn_network:

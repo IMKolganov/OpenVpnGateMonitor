@@ -14,6 +14,7 @@ services:
       - openvpn_network
       - backend_network
     volumes:
+      - jwt-secret-data:/app/secrets
       - openvpn_data:/mnt
       - ./backend/appsettings.json:/app/appsettings.json
       - ./backend/appsettings.Development.json:/app/appsettings.Development.json
@@ -22,11 +23,13 @@ services:
     depends_on:
       - postgres_backend
     environment:
+      - DOTNET_RUNNING_IN_CONTAINER=true
       - FRONTEND_URL=http://frontend:5582
       - DOTNET_ENVIRONMENT=Debug
       - DB_CONNECTION_STRING=Host=postgres_backend;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend
       - DB_DEFAULT_SCHEMA=xgb_dashopnvpn
       - DB_MIGRATION_TABLE=__EFMigrationsHistoryBackend
+      - JWT_SECRET
 
   frontend:
     build: 
@@ -143,6 +146,7 @@ services:
       - "5433:5432"
 
 volumes:
+  jwt-secret-data:
   openvpn_data:
   postgres_data_backend:
   postgres_data_telegrambot:

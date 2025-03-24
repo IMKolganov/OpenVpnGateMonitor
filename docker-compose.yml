@@ -16,7 +16,6 @@ services:
     volumes:
       - openvpn_data_tcp:/mnt/tcp
       - openvpn_data_udp:/mnt/udp
-      - jwt-secret-data:/app/secrets
       - ./backend/appsettings.json:/app/appsettings.json
       - ./backend/appsettings.Development.json:/app/appsettings.Development.json
     ports:
@@ -25,7 +24,6 @@ services:
       - postgres_backend
     environment:
       - DOTNET_RUNNING_IN_CONTAINER=true
-      - FRONTEND_URL=http://frontend:5582
       - DOTNET_ENVIRONMENT=Debug
       - DB_CONNECTION_STRING=Host=postgres_backend;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend
       - DB_DEFAULT_SCHEMA=xgb_dashopnvpn
@@ -61,17 +59,19 @@ services:
     depends_on:
       - postgres_telegrambot
     environment:
-      - DB_CONNECTION_STRING=Host=postgres_telegrambot;Port=5432;Database=datagate_telegrambot;Username=telegrambot_user;Password=securepassword_telegrambot
-      - DB_DEFAULT_SCHEMA=xgb_botvpndev
-      - DB_MIGRATION_TABLE=__EFMigrationsHistoryTelegramBot
-      - DEPLOY_ENV=${DEPLOY_ENV:?DEPLOY_ENV is required}
-      - PORT=${PORT:?PORT is required}
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT is required}
+      DB_CONNECTION_STRING: Host=postgres_telegrambot;Port=5432;Database=datagate_telegrambot;Username=telegrambot_user;Password=securepassword_telegrambot
+      DB_DEFAULT_SCHEMA: xgb_botvpndev
+      DB_MIGRATION_TABLE: __EFMigrationsHistoryTelegramBot
+      DEPLOY_ENV: ${DEPLOY_ENV:?DEPLOY_ENV is required}
+      PORT: ${PORT:?PORT is required}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT is required}
+      BOT_TOKEN: ${BOT_TOKEN:?BOT_TOKEN is required}
+      TELEGRAM_WEBHOOK: ${TELEGRAM_WEBHOOK:?TELEGRAM_WEBHOOK is required}
+      CERTIFICATE_PATH: /app/datagatetgbot.pem
+      USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
     volumes:
-      - ./telegrambot/appsettings.json:/app/appsettings.json
-      - ./telegrambot/appsettings.Development.json:/app/appsettings.Development.json
-      - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem
-      - ./telegrambot/datagatetgbot.key:/app/datagatetgbot.key
+      - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem:ro
+      - ./telegrambot/datagatetgbot.key:/app/datagatetgbot.key:ro
 
   openvpn_udp:
     build:
@@ -148,7 +148,6 @@ services:
 volumes:
   openvpn_data_tcp:
   openvpn_data_udp:
-  jwt-secret-data:
   postgres_data_backend:
   postgres_data_telegrambot:
 

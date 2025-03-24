@@ -14,6 +14,8 @@ services:
       - openvpn_network
       - backend_network
     volumes:
+      - openvpn_data_tcp:/mnt/tcp
+      - openvpn_data_udp:/mnt/udp
       - jwt-secret-data:/app/secrets
       - openvpn_data:/mnt
       - ./backend/appsettings.json:/app/appsettings.json
@@ -86,7 +88,7 @@ services:
     devices:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
-      - ./openvpn-data-udp:/mnt
+      - openvpn_data_udp:/mnt
     ports:
       - "1194:1194/udp"
     environment:
@@ -107,7 +109,7 @@ services:
     devices:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
-      - ./openvpn-data-tcp:/mnt
+      - openvpn_data_tcp:/mnt
     ports:
       - "1195:1195"
     environment:
@@ -146,8 +148,9 @@ services:
       - "5433:5432"
 
 volumes:
+  openvpn_data_tcp:
+  openvpn_data_udp:
   jwt-secret-data:
-  openvpn_data:
   postgres_data_backend:
   postgres_data_telegrambot:
 

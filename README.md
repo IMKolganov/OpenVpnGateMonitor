@@ -1,53 +1,51 @@
-# OpenVpnGateMonitor
+# OpenVPN Gate Monitor
 
-## 🚀 Clone the Project with Submodules
-To get the full project including backend and frontend submodules, use the following command:
+A monitoring tool for OpenVPN servers with a user-friendly dashboard and real-time status updates.
 
-```sh
-git clone --recurse-submodules https://github.com/IMKolganov/OpenVpnGateMonitor.git && \
-cd OpenVpnGateMonitor && \
-git submodule update --init --recursive
+🔗 **Project Repository:**  
+[https://github.com/IMKolganov/OpenVPNGateMonitor](https://github.com/IMKolganov/OpenVPNGateMonitor)
+
+## 🚀 Quick Start
+
+Make sure you have [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed on your system.
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/IMKolganov/OpenVPNGateMonitor.git
+cd OpenVPNGateMonitor
 ```
 
----
+### 2. Configure environment variables
 
-## 🛠️ Prepare Configuration
-Before running the application, you need to prepare the **configuration file**:
-1. Create your **`appsettings.json`** file.
-2. Place it in the root directory of the **backend folder** (`OpenVPNGateMonitorBackend/`).
+The `.env.local` file is already included in the repository. You can modify it if needed to match your environment.
 
----
+### 3. Start the project
 
-## 🚀 Run with Docker Compose
-Once the project is cloned and configured, run the following command to build and start the services:
-
-```sh
-docker-compose down && \
-docker-compose up -d --build
+```bash
+docker compose --env-file .env.local up --force-recreate --pull always
 ```
 
----
+This command will:
 
-## 📌 Available Services
-| Service  | Container Name | Exposed Port | Docker Network Alias |
-|----------|---------------|--------------|----------------------|
-| **Backend** | `openvpn-backend` | `5581` | `backend` |
-| **Frontend** | `openvpn-frontend` | `5582` | `frontend` |
+- Recreate all containers
+- Always pull the latest images
+- Use the environment configuration from `.env.local`
 
-After running `docker-compose`, the services will be accessible at:
-- **Frontend:** [http://localhost:5582](http://localhost:5582)
-- **Backend:** [http://localhost:5581](http://localhost:5581)
+## 📦 Project Structure
 
-Within the **Docker network**, they communicate as:
-- **Frontend → Backend:** `http://backend:5581`
-- **Backend → Frontend:** `http://frontend:5582`
+- `backend/` — Backend services
+- `frontend/` — React-based UI
+- `.env.local` — Environment variables for Docker Compose
+- `docker-compose.yml` — Service definitions
 
----
+## 📈 Features
 
-## ✅ Summary
-1. Clone the repository with all submodules.
-2. Prepare `appsettings.json` and place it in `OpenVPNGateMonitorBackend/`.
-3. Run `docker-compose` to start both backend and frontend.
-4. Access the services via `http://localhost:5582` (Frontend) and `http://localhost:5581` (Backend).
+- Real-time OpenVPN server monitoring
+- Dashboard interface
+- API integration
+- Telegram bot support (optional)
 
-Now your **OpenVpnGateMonitor** is fully set up and running! 🚀
+## 📝 License
+
+This project is licensed under the MIT License.

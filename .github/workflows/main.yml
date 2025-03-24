@@ -10,6 +10,10 @@ jobs:
     runs-on: [self-hosted, raspberrypi-2]
     name: Build and Deploy on Raspberry Pi
     env:
+      DEPLOY_ENV: production
+      PORT: 5000
+      TARGETARCH: arm64
+      BUILD_CONFIGURATION: Release
       ASPNETCORE_ENVIRONMENT: Production
 
     steps:
@@ -32,9 +36,9 @@ jobs:
           echo "Listing files:"
           ls -lah
           echo "Listing backend:"
-          ls -lah backend/
+          ls -lah backend/ || true
           echo "Listing frontend:"
-          ls -lah frontend/
+          ls -lah frontend/ || true
 
       - name: Build and start services with Docker Compose
         run: |
@@ -42,6 +46,12 @@ jobs:
           docker compose down || true
           echo "Building and starting new containers..."
           docker compose up --build -d
+        env:
+          DEPLOY_ENV: ${{ env.DEPLOY_ENV }}
+          PORT: ${{ env.PORT }}
+          TARGETARCH: ${{ env.TARGETARCH }}
+          BUILD_CONFIGURATION: ${{ env.BUILD_CONFIGURATION }}
+          ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
 
       - name: Verify running containers
         run: |

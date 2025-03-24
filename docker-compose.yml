@@ -5,6 +5,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        TARGETARCH: ${TARGETARCH:?TARGETARCH is required}
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:?BUILD_CONFIGURATION is required}
     container_name: open-vpn-gate-monitor-backend
     restart: always
     networks:

@@ -17,7 +17,6 @@ services:
       - openvpn_data_tcp:/mnt/tcp
       - openvpn_data_udp:/mnt/udp
       - jwt-secret-data:/app/secrets
-      - openvpn_data:/mnt
       - ./backend/appsettings.json:/app/appsettings.json
       - ./backend/appsettings.Development.json:/app/appsettings.Development.json
     ports:
@@ -69,7 +68,6 @@ services:
       - PORT=${PORT:?PORT is required}
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT is required}
     volumes:
-      - openvpn_data:/mnt
       - ./telegrambot/appsettings.json:/app/appsettings.json
       - ./telegrambot/appsettings.Development.json:/app/appsettings.Development.json
       - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem

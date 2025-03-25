@@ -63,7 +63,7 @@ services:
       DB_DEFAULT_SCHEMA: xgb_botvpndev
       DB_MIGRATION_TABLE: __EFMigrationsHistoryTelegramBot
       DEPLOY_ENV: ${DEPLOY_ENV:?DEPLOY_ENV is required}
-      PORT: ${PORT:?PORT is required}
+      TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:?TELEGRAMBOT_PORT is required}
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT is required}
       BOT_TOKEN: ${BOT_TOKEN:?BOT_TOKEN is required}
       TELEGRAM_WEBHOOK: ${TELEGRAM_WEBHOOK:?TELEGRAM_WEBHOOK is required}
@@ -71,7 +71,6 @@ services:
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
     volumes:
       - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem:ro
-      - ./telegrambot/datagatetgbot.key:/app/datagatetgbot.key:ro
 
   openvpn_udp:
     build:

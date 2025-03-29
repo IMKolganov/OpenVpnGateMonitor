@@ -90,6 +90,7 @@ services:
     ports:
       - "1194:1194/udp"
     environment:
+      DATA_DIR: /openvpn-udp
       PORT: "1194"
       PROTO: udp
       MGMT_PORT: "5092"
@@ -111,6 +112,7 @@ services:
     ports:
       - "1195:1195"
     environment:
+      DATA_DIR: /openvpn-tcp
       PORT: "1195"
       PROTO: tcp
       MGMT_PORT: "5093"

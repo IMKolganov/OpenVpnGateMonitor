@@ -1,6 +1,7 @@
 FROM ubuntu:latest
 
 RUN apt update && apt install -y \
+    file \
     iproute2 \
     iptables \
     tcpdump \
@@ -8,9 +9,10 @@ RUN apt update && apt install -y \
     easy-rsa && \
     rm -rf /var/lib/apt/lists/*
 
-VOLUME ["/mnt"]
-
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh && \
+    file /entrypoint.sh && \
+    head -1 /entrypoint.sh | cat -A
 
 ENTRYPOINT ["/entrypoint.sh"]

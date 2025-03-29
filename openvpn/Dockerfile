@@ -15,6 +15,4 @@ RUN chmod +x /entrypoint.sh && \
     file /entrypoint.sh && \
     head -1 /entrypoint.sh | cat -A
 
-VOLUME ["/mnt"]
-
 ENTRYPOINT ["/entrypoint.sh"]

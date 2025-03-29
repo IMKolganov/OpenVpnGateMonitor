@@ -56,6 +56,7 @@ services:
     restart: always
     networks:
       - backend_network
+      - tgbot_network
     depends_on:
       - postgres_telegrambot
     environment:
@@ -72,6 +73,13 @@ services:
       - "${TELEGRAMBOT_PORT}:${TELEGRAMBOT_PORT}"
     volumes:
       - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem:ro
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    networks:
+      - tgbot_network
 
   openvpn_udp:
     build:
@@ -157,4 +165,6 @@ networks:
   openvpn_network:
     driver: bridge
   backend_network:
+    driver: bridge
+  tgbot_network:
     driver: bridge

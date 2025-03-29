@@ -14,8 +14,8 @@ services:
       - openvpn_network
       - backend_network
     volumes:
-      - openvpn_data_tcp:/mnt/tcp
-      - openvpn_data_udp:/mnt/udp
+      - openvpn_data_tcp:/openvpn-tcp
+      - openvpn_data_udp:/openvpn-udp
       - ./backend/appsettings.json:/app/appsettings.json
       - ./backend/appsettings.Development.json:/app/appsettings.Development.json
     ports:
@@ -86,7 +86,7 @@ services:
     devices:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
-      - openvpn_data_udp:/mnt
+      - openvpn_data_udp:/openvpn-udp
     ports:
       - "1194:1194/udp"
     environment:
@@ -107,7 +107,7 @@ services:
     devices:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
-      - openvpn_data_tcp:/mnt
+      - openvpn_data_tcp:/openvpn-tcp
     ports:
       - "1195:1195"
     environment:
@@ -126,7 +126,7 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: datagate_bakend
+      POSTGRES_DB: datagate_backend
       POSTGRES_USER: backend_user
       POSTGRES_PASSWORD: securepassword_backend
 

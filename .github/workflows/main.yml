@@ -15,6 +15,8 @@ jobs:
       BUILD_CONFIGURATION: Debug
       ASPNETCORE_ENVIRONMENT: Development
       TELEGRAMBOT_PORT: 88
+      TELEGRAMBOT_BOT_TOKEN:
+      TELEGRAM_WEBHOOK:
 
     steps:
       - name: Clean workspace before checkout
@@ -48,6 +50,8 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           DEPLOY_ENV: ${{ env.DEPLOY_ENV }}
           TELEGRAMBOT_PORT: ${{ env.TELEGRAMBOT_PORT }}
+          TELEGRAMBOT_BOT_TOKEN: ${{ env.TELEGRAMBOT_BOT_TOKEN }}
+          TELEGRAM_WEBHOOK: ${{ env.TELEGRAM_WEBHOOK }}
           TARGETARCH: ${{ env.TARGETARCH }}
           BUILD_CONFIGURATION: ${{ env.BUILD_CONFIGURATION }}
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}

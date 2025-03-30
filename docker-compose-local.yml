@@ -2,7 +2,12 @@ version: "3.9"
 
 services:
   backend:
-    image: imkolganov/openvpn-gate-monitor-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        TARGETARCH: ${TARGETARCH:?TARGETARCH is required}
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:?BUILD_CONFIGURATION is required}
     container_name: open-vpn-gate-monitor-backend
     restart: always
     networks:
@@ -26,7 +31,9 @@ services:
       JWT_SECRET:
 
   frontend:
-    image: imkolganov/openvpn-gate-monitor-frontend:latest
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: open-vpn-gate-monitor-frontend
     restart: always
     networks:
@@ -39,7 +46,12 @@ services:
       BACKEND_URL: http://backend:5581
 
   telegrambot:
-    image: imkolganov/openvpn-gate-monitor-telegrambot:latest
+    build: 
+      context: ./telegrambot
+      dockerfile: Dockerfile
+      args:
+        TARGETARCH: ${TARGETARCH:?TARGETARCH is required}
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:?BUILD_CONFIGURATION is required}
     container_name: open-vpn-gate-monitor-telegrambot
     restart: always
     networks:

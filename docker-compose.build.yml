@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        TARGETARCH: ${TARGETARCH}
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}
+    image: imkolganov/openvpn-gate-monitor-backend:${TARGETARCH}
+
+  telegrambot:
+    build:
+      context: ./telegrambot
+      dockerfile: Dockerfile
+      args:
+        TARGETARCH: ${TARGETARCH}
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}
+    image: imkolganov/openvpn-gate-monitor-telegram:${TARGETARCH}
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: imkolganov/openvpn-gate-monitor-frontend:latest

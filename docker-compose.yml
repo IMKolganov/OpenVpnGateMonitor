@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.9"
 
 services:
   backend:
@@ -14,9 +14,8 @@ services:
       - openvpn_network
       - backend_network
     volumes:
-      - openvpn_data_tcp:/mnt/tcp
-      - openvpn_data_udp:/mnt/udp
-      - jwt-secret-data:/app/secrets
+      - openvpn_data_tcp:/openvpn-tcp
+      - openvpn_data_udp:/openvpn-udp
       - ./backend/appsettings.json:/app/appsettings.json
       - ./backend/appsettings.Development.json:/app/appsettings.Development.json
     ports:
@@ -24,13 +23,12 @@ services:
     depends_on:
       - postgres_backend
     environment:
-      - DOTNET_RUNNING_IN_CONTAINER=true
-      - FRONTEND_URL=http://frontend:5582
-      - DOTNET_ENVIRONMENT=Debug
-      - DB_CONNECTION_STRING=Host=postgres_backend;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend
-      - DB_DEFAULT_SCHEMA=xgb_dashopnvpn
-      - DB_MIGRATION_TABLE=__EFMigrationsHistoryBackend
-      - JWT_SECRET
+      ASPNETCORE_URLS: http://0.0.0.0:5581
+      DOTNET_RUNNING_IN_CONTAINER: "true"
+      DB_CONNECTION_STRING: Host=postgres_backend;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend
+      DB_DEFAULT_SCHEMA: xgb_dashopnvpn
+      DB_MIGRATION_TABLE: __EFMigrationsHistoryBackend
+      JWT_SECRET:
 
   frontend:
     build: 
@@ -45,7 +43,7 @@ services:
     depends_on:
       - backend
     environment:
-      - BACKEND_URL=http://backend:5581
+      BACKEND_URL: http://backend:5581
 
   telegrambot:
     build: 
@@ -58,20 +56,30 @@ services:
     restart: always
     networks:
       - backend_network
+      - tgbot_network
     depends_on:
       - postgres_telegrambot
     environment:
-      - DB_CONNECTION_STRING=Host=postgres_telegrambot;Port=5432;Database=datagate_telegrambot;Username=telegrambot_user;Password=securepassword_telegrambot
-      - DB_DEFAULT_SCHEMA=xgb_botvpndev
-      - DB_MIGRATION_TABLE=__EFMigrationsHistoryTelegramBot
-      - DEPLOY_ENV=${DEPLOY_ENV:?DEPLOY_ENV is required}
-      - PORT=${PORT:?PORT is required}
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:?ASPNETCORE_ENVIRONMENT is required}
+      ASPNETCORE_URLS: http://0.0.0.0:${TELEGRAMBOT_PORT}:${TELEGRAMBOT_PORT}
+      TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:?TELEGRAMBOT_PORT is required}
+      BOT_TOKEN: ${BOT_TOKEN:?BOT_TOKEN is required}
+      TELEGRAM_WEBHOOK: ${TELEGRAM_WEBHOOK:?TELEGRAM_WEBHOOK is required}
+      USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
+      DB_CONNECTION_STRING: Host=postgres_telegrambot;Port=5432;Database=datagate_telegrambot;Username=telegrambot_user;Password=securepassword_telegrambot
+      DB_DEFAULT_SCHEMA: xgb_botvpndev
+      DB_MIGRATION_TABLE: __EFMigrationsHistoryTelegramBot
+      CERTIFICATE_PATH: /app/datagatetgbot.pem
+    ports:
+      - "${TELEGRAMBOT_PORT}:${TELEGRAMBOT_PORT}"
     volumes:
-      - ./telegrambot/appsettings.json:/app/appsettings.json
-      - ./telegrambot/appsettings.Development.json:/app/appsettings.Development.json
-      - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem
-      - ./telegrambot/datagatetgbot.key:/app/datagatetgbot.key
+      - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem:ro
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    networks:
+      - tgbot_network
 
   openvpn_udp:
     build:
@@ -86,13 +94,14 @@ services:
     devices:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
-      - openvpn_data_udp:/mnt
+      - openvpn_data_udp:/openvpn-udp
     ports:
       - "1194:1194/udp"
     environment:
-      - PORT=1194
-      - PROTO=udp
-      - MGMT_PORT=5092
+      DATA_DIR: /openvpn-udp
+      PORT: "1194"
+      PROTO: udp
+      MGMT_PORT: "5092"
 
   openvpn_tcp:
     build:
@@ -107,48 +116,48 @@ services:
     devices:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
-      - openvpn_data_tcp:/mnt
+      - openvpn_data_tcp:/openvpn-tcp
     ports:
       - "1195:1195"
     environment:
-      - PORT=1195
-      - PROTO=tcp
-      - MGMT_PORT=5093
+      DATA_DIR: /openvpn-tcp
+      PORT: "1195"
+      PROTO: tcp
+      MGMT_PORT: "5093"
 
   postgres_backend:
     image: postgres:latest
     container_name: datagate_postgres_backend
     restart: always
-    environment:
-      - POSTGRES_DB=datagate_bakend
-      - POSTGRES_USER=backend_user
-      - POSTGRES_PASSWORD=securepassword_backend
     networks:
       - backend_network
     volumes:
       - postgres_data_backend:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    environment:
+      POSTGRES_DB: datagate_backend
+      POSTGRES_USER: backend_user
+      POSTGRES_PASSWORD: securepassword_backend
 
   postgres_telegrambot:
     image: postgres:latest
     container_name: datagate_postgres_telegrambot
     restart: always
-    environment:
-      - POSTGRES_DB=datagate_telegrambot
-      - POSTGRES_USER=telegrambot_user
-      - POSTGRES_PASSWORD=securepassword_telegrambot
     networks:
       - backend_network
     volumes:
       - postgres_data_telegrambot:/var/lib/postgresql/data
     ports:
       - "5433:5432"
+    environment:
+      POSTGRES_DB: datagate_telegrambot
+      POSTGRES_USER: telegrambot_user
+      POSTGRES_PASSWORD: securepassword_telegrambot
 
 volumes:
   openvpn_data_tcp:
   openvpn_data_udp:
-  jwt-secret-data:
   postgres_data_backend:
   postgres_data_telegrambot:
 
@@ -156,4 +165,6 @@ networks:
   openvpn_network:
     driver: bridge
   backend_network:
+    driver: bridge
+  tgbot_network:
     driver: bridge

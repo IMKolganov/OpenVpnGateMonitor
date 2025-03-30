@@ -4,7 +4,9 @@ set -e
 PORT=${PORT:-1194}
 PROTO=${PROTO:-udp}
 MGMT_PORT=${MGMT_PORT:-5092}
+DATA_DIR=${DATA_DIR:-/mnt}
 
+EASYRSA_DIR="$DATA_DIR/easy-rsa"
 
 echo "===== STARTING OPENVPN CONTAINER ====="
 
@@ -14,10 +16,8 @@ iptables -A FORWARD -i tun0 -j ACCEPT
 iptables -A FORWARD -o tun0 -j ACCEPT
 iptables -t nat -A POSTROUTING -s 10.51.28.0/24 -o eth0 -j MASQUERADE
 
-EASYRSA_DIR="/mnt/easy-rsa"
-
-echo "===== Checking contents of /mnt before starting..."
-ls -l /mnt
+echo "===== Checking contents of $DATA_DIR before starting..."
+ls -l "$DATA_DIR"
 
 if [ -d "$EASYRSA_DIR/pki" ]; then
     echo "Found existing PKI:"
@@ -34,7 +34,6 @@ else
     ./easyrsa build-ca nopass
     ./easyrsa gen-req server nopass
     ./easyrsa sign-req server server
-    # Skip DH, use ECDH instead
 fi
 
 # Ensure ta.key exists
@@ -64,9 +63,9 @@ for SRC in "${!FILES_TO_COPY[@]}"; do
 done
 
 # Generate default server.conf if not present
-if [ ! -f /mnt/server.conf ]; then
+if [ ! -f "$DATA_DIR/server.conf" ]; then
     echo "Generating default server.conf..."
-    cat <<EOF > /mnt/server.conf
+    cat <<EOF > "$DATA_DIR/server.conf"
 port $PORT
 proto $PROTO
 dev tun
@@ -101,10 +100,10 @@ group nogroup
 persist-key
 persist-tun
 
-status /mnt/openvpn-status.log
+status $DATA_DIR/openvpn-status.log
 status-version 3
-log /mnt/openvpn.log
-log-append /mnt/openvpn.log
+log $DATA_DIR/openvpn.log
+log-append $DATA_DIR/openvpn.log
 
 management 0.0.0.0 $MGMT_PORT
 
@@ -114,17 +113,21 @@ fi
 
 # Prepare log files
 echo "Clearing logs..."
-truncate -s 0 /mnt/openvpn.log || touch /mnt/openvpn.log
-truncate -s 0 /mnt/openvpn-status.log || touch /mnt/openvpn-status.log
-chmod 777 /mnt/openvpn.log /mnt/openvpn-status.log
+truncate -s 0 "$DATA_DIR/openvpn.log" || touch "$DATA_DIR/openvpn.log"
+truncate -s 0 "$DATA_DIR/openvpn-status.log" || touch "$DATA_DIR/openvpn-status.log"
+chmod 777 "$DATA_DIR/openvpn.log" "$DATA_DIR/openvpn-status.log"
+
+# 🔐 Add read/execute permissions to everything inside DATA_DIR
+echo "Setting permissions for $DATA_DIR recursively..."
+chmod -R a+rX "$DATA_DIR"
 
 echo "===== FINAL CHECK BEFORE STARTING OPENVPN ====="
-ls -l /mnt
+ls -l "$DATA_DIR"
 [ -d "$EASYRSA_DIR/pki" ] && ls -l "$EASYRSA_DIR/pki"
 
 echo "===== server.conf contents ====="
-cat /mnt/server.conf || echo "server.conf not found!"
+cat "$DATA_DIR/server.conf" || echo "server.conf not found!"
 
 echo "===== Starting OpenVPN..."
-tail -F /mnt/openvpn.log /mnt/openvpn-status.log &
-exec openvpn --config /mnt/server.conf
+tail -F "$DATA_DIR/openvpn.log" "$DATA_DIR/openvpn-status.log" &
+exec openvpn --config "$DATA_DIR/server.conf"

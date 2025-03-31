@@ -11,8 +11,6 @@ services:
     volumes:
       - openvpn_data_tcp:/openvpn-tcp
       - openvpn_data_udp:/openvpn-udp
-      - ./backend/appsettings.json:/app/appsettings.json
-      - ./backend/appsettings.Development.json:/app/appsettings.Development.json
     ports:
       - "5581:5581"
     depends_on:

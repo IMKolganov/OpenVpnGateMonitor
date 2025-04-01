@@ -38,7 +38,7 @@ jobs:
           docker compose up --build -d
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          DB_CONNECTION_STRING_DATAGATE: ${{ secrets.DATAGATE_MONITOR_CONNECT_DB }}
+          DB_CONNECTION_STRING_DATAGATE: ${{ secrets.DATAGATE_DB }}
           DEPLOY_ENV: ${{ env.DEPLOY_ENV }}
           TELEGRAMBOT_PORT: ${{ env.TELEGRAMBOT_PORT }}
           TELEGRAMBOT_BOT_TOKEN: ${{ env.TELEGRAMBOT_BOT_TOKEN }}

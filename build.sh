@@ -24,10 +24,9 @@ build_and_push() {
         local TARGETARCH
         [[ "$ARCH" == "amd64" ]] && TARGETARCH=x64 || TARGETARCH=arm64
 
-        echo "🚀 Building ${SERVICE} for ${ARCH}..."
+        echo "🚀 Building ${SERVICE} for ${ARCH} (via dotnet -r linux-${ARCH})..."
 
         docker buildx build \
-            --platform linux/${ARCH} \
             --build-arg TARGETARCH=${TARGETARCH} \
             --build-arg BUILD_CONFIGURATION=${BUILD_CONFIG} \
             -t ${IMAGE_NAME}:${ARCH} \
@@ -54,7 +53,6 @@ build_and_push telegrambot
 echo "🎨 Building frontend for amd64 + arm64..."
 
 docker buildx build \
-    --platform linux/amd64,linux/arm64 \
     -t ${DOCKER_USER}/openvpn-gate-monitor-frontend:${FRONT_TAG} \
     --push \
     ./frontend

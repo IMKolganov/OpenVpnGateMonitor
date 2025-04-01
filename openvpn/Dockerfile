@@ -11,6 +11,9 @@ RUN apt update && apt install -y \
 
 COPY entrypoint.sh /entrypoint.sh
 
+# 🔧 Convert CRLF to LF just in case
+RUN sed -i 's/\r$//' /entrypoint.sh
+
 RUN chmod +x /entrypoint.sh && \
     file /entrypoint.sh && \
     head -1 /entrypoint.sh | cat -A

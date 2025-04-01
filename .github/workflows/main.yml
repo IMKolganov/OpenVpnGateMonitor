@@ -32,22 +32,13 @@ jobs:
           lfs: true
           persist-credentials: false
 
-      - name: Debug working directory
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Listing files:"
-          ls -lah
-          echo "Listing backend:"
-          ls -lah backend/ || true
-          echo "Listing frontend:"
-          ls -lah frontend/ || true
-
       - name: Build and start services with Docker Compose
         run: |
           docker compose down || true
           docker compose up --build -d
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          DB_CONNECTION_STRING: ${{ secrets.DATAGATE_MONITOR_CONNECT_DB }}
           DEPLOY_ENV: ${{ env.DEPLOY_ENV }}
           TELEGRAMBOT_PORT: ${{ env.TELEGRAMBOT_PORT }}
           TELEGRAMBOT_BOT_TOKEN: ${{ env.TELEGRAMBOT_BOT_TOKEN }}

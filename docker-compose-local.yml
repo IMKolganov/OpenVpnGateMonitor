@@ -41,7 +41,7 @@ services:
     depends_on:
       - backend
     environment:
-      BACKEND_URL: http://backend:5581/
+      BACKEND_URL: http://backend:5581
 
   telegrambot:
     build: 

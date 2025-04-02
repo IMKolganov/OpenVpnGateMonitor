@@ -3,6 +3,7 @@ version: "3.9"
 services:
   backend:
     image: imkolganov/openvpn-gate-monitor-backend:latest
+    pull_policy: always
     container_name: open-vpn-gate-monitor-backend
     restart: always
     networks:
@@ -25,6 +26,7 @@ services:
 
   frontend:
     image: imkolganov/openvpn-gate-monitor-frontend:latest
+    pull_policy: always
     container_name: open-vpn-gate-monitor-frontend
     restart: always
     networks:
@@ -38,6 +40,7 @@ services:
 
   telegrambot:
     image: imkolganov/openvpn-gate-monitor-telegrambot:latest
+    pull_policy: always
     container_name: open-vpn-gate-monitor-telegrambot
     restart: always
     networks:

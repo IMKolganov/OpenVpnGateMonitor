@@ -6,7 +6,6 @@ services:
     pull_policy: always
     container_name: open-vpn-gate-monitor-backend
     restart: always
-    user: app
     networks:
       - openvpn_network
       - backend_network

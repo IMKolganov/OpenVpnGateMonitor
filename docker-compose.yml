@@ -12,6 +12,7 @@ services:
     volumes:
       - openvpn_data_tcp:/openvpn-tcp
       - openvpn_data_udp:/openvpn-udp
+      - geolite_data:/app/GeoLite
     ports:
       - "5581:5581"
     depends_on:
@@ -23,8 +24,6 @@ services:
       DB_DEFAULT_SCHEMA: xgb_dashopnvpn
       DB_MIGRATION_TABLE: __EFMigrationsHistoryDashboardVpn
       JWT_SECRET:
-    volumes:
-      - geolite_data:/app/GeoLite
 
   frontend:
     image: imkolganov/openvpn-gate-monitor-frontend:latest

@@ -19,27 +19,37 @@ iptables -t nat -A POSTROUTING -s 10.51.28.0/24 -o eth0 -j MASQUERADE
 echo "===== Checking contents of $DATA_DIR before starting..."
 ls -l "$DATA_DIR"
 
-if [ -d "$EASYRSA_DIR/pki" ]; then
-    echo "Found existing PKI:"
-    ls -l "$EASYRSA_DIR/pki"
-else
-    echo "PKI not found. Initializing new PKI..."
-    make-cadir "$EASYRSA_DIR"
+if [ ! -x "$EASYRSA_DIR/easyrsa" ]; then
+    echo "Copying Easy-RSA to $EASYRSA_DIR..."
+    mkdir -p "$EASYRSA_DIR"
+    cp -r /usr/share/easy-rsa/* "$EASYRSA_DIR"
+    chmod +x "$EASYRSA_DIR/easyrsa"
+fi
+
+if [ ! -f "$EASYRSA_DIR/easyrsa" ] || [ ! -x "$EASYRSA_DIR/easyrsa" ]; then
+    echo "ERROR: Easy-RSA script not found or not executable at $EASYRSA_DIR/easyrsa"
+    echo "Please ensure Easy-RSA v3 is installed and placed correctly."
+    exit 1
+fi
+
+if [ ! -d "$EASYRSA_DIR/pki" ]; then
+    echo "PKI not found. Initializing..."
     cd "$EASYRSA_DIR"
 
     export EASYRSA_BATCH=1
     export EASYRSA_REQ_CN="OpenVPN-Server"
+    export EASYRSA_PKI="$EASYRSA_DIR/pki"
 
-    ./easyrsa init-pki
-    ./easyrsa build-ca nopass
-    ./easyrsa gen-req server nopass
-    ./easyrsa sign-req server server
+    ./easyrsa --batch init-pki
+    ./easyrsa --batch build-ca nopass
+    ./easyrsa --batch gen-req server nopass
+    ./easyrsa --batch sign-req server server
 fi
 
 # Ensure ta.key exists
 if [ ! -f "$EASYRSA_DIR/pki/ta.key" ]; then
     echo "===== Generating new ta.key (tls-crypt)..."
-    openvpn --genkey --secret "$EASYRSA_DIR/pki/ta.key"
+    openvpn --genkey secret "$EASYRSA_DIR/pki/ta.key"
 else
     echo "ta.key already exists."
 fi
@@ -58,7 +68,8 @@ for SRC in "${!FILES_TO_COPY[@]}"; do
   if [ -f "$SRC" ]; then
     cp "$SRC" "$DEST"
   else
-    echo "WARNING: $SRC not found!"
+    echo "ERROR: Required file $SRC not found, exiting."
+    exit 1
   fi
 done
 
@@ -117,7 +128,7 @@ truncate -s 0 "$DATA_DIR/openvpn.log" || touch "$DATA_DIR/openvpn.log"
 truncate -s 0 "$DATA_DIR/openvpn-status.log" || touch "$DATA_DIR/openvpn-status.log"
 chmod 777 "$DATA_DIR/openvpn.log" "$DATA_DIR/openvpn-status.log"
 
-# 🔐 Add read/execute permissions to everything inside DATA_DIR
+# Add read/execute permissions to everything inside DATA_DIR
 echo "Setting permissions for $DATA_DIR recursively..."
 chmod -R a+rX "$DATA_DIR"
 

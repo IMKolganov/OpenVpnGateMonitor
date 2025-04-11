@@ -15,8 +15,6 @@ jobs:
       BUILD_CONFIGURATION: Debug
       ASPNETCORE_ENVIRONMENT: Development
       TELEGRAMBOT_PORT: 88
-      TELEGRAMBOT_BOT_TOKEN:
-      TELEGRAM_WEBHOOK:
 
     steps:
       - name: Clean workspace before checkout
@@ -39,13 +37,27 @@ jobs:
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           DB_CONNECTION_STRING_DATAGATE: ${{ secrets.DATAGATE_DB }}
+
+          # General env
           DEPLOY_ENV: ${{ env.DEPLOY_ENV }}
           TELEGRAMBOT_PORT: ${{ env.TELEGRAMBOT_PORT }}
-          TELEGRAMBOT_BOT_TOKEN: ${{ secrets.TELEGRAMBOT_BOT_TOKEN }}
-          TELEGRAM_WEBHOOK: ${{ secrets.TELEGRAM_WEBHOOK }}
           TARGETARCH: ${{ env.TARGETARCH }}
           BUILD_CONFIGURATION: ${{ env.BUILD_CONFIGURATION }}
           ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
+
+          # Telegram Bot
+          TELEGRAMBOT_BOT_TOKEN: ${{ secrets.TELEGRAMBOT_BOT_TOKEN }}
+          TELEGRAM_WEBHOOK: ${{ secrets.TELEGRAM_WEBHOOK }}
+
+          # Dashboard API
+          DASHBOARDAPI_URL: ${{ secrets.DASHBOARDAPI_URL }}
+          DASHBOARDAPI_CLIENTID: ${{ secrets.DASHBOARDAPI_CLIENTID }}
+          DASHBOARDAPI_CLIENTSECRET: ${{ secrets.DASHBOARDAPI_CLIENTSECRET }}
+
+          # Elasticsearch
+          ELASTIC_URI: ${{ secrets.ELASTIC_URI }}
+          ELASTIC_USERNAME: ${{ secrets.ELASTIC_USERNAME }}
+          ELASTIC_PASSWORD: ${{ secrets.ELASTIC_PASSWORD }}
 
       - name: Verify running containers
         run: |

@@ -73,8 +73,6 @@ services:
       ELASTIC_INDEX_FORMAT: DataGateVPNBot-dev-logs-{0:yyyy.MM.dd}
     ports:
       - "${TELEGRAMBOT_PORT}:${TELEGRAMBOT_PORT}"
-    volumes:
-      - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem:ro
 
   telegrambot_redis:
     image: redis:latest

@@ -47,7 +47,7 @@ jobs:
 
           # Telegram Bot
           TELEGRAMBOT_BOT_TOKEN: ${{ secrets.TELEGRAMBOT_BOT_TOKEN }}
-          TELEGRAM_WEBHOOK: ${{ secrets.TELEGRAM_WEBHOOK }}
+          HOST_ADDRESS: ${{ secrets.HOST_ADDRESS }}
 
           # Dashboard API
           DASHBOARDAPI_URL: ${{ secrets.DASHBOARDAPI_URL }}

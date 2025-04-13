@@ -53,8 +53,9 @@ services:
       ASPNETCORE_URLS: http://0.0.0.0:${TELEGRAMBOT_PORT}:${TELEGRAMBOT_PORT}
       TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:?TELEGRAMBOT_PORT is required}
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN}
-      TELEGRAM_WEBHOOK: ${TELEGRAM_WEBHOOK}
+      HOST_ADDRESS: ${HOST_ADDRESS}
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
+      AUTO_GENERATE_CERTIFICATE: ${AUTO_GENERATE_CERTIFICATE:-true}      
       DB_CONNECTION_STRING: Host=postgres_telegrambot;Port=5432;Database=datagate_telegrambot;Username=telegrambot_user;Password=securepassword_telegrambot
       DB_DEFAULT_SCHEMA: xgb_botvpndev
       DB_MIGRATION_TABLE: __EFMigrationsHistoryTelegramBot

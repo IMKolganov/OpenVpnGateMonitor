@@ -60,7 +60,7 @@ services:
       DB_DEFAULT_SCHEMA: xgb_botvpndev
       DB_MIGRATION_TABLE: __EFMigrationsHistoryTelegramBot
       CERTIFICATE_PFX_PATH: /app/datagatetgbot.pfx
-      CERTIFICATE_CRT_PATH: /app/datagatetgbot.crt
+      CERTIFICATE_PEM_PATH: /app/datagatetgbot.pem
 
       # 🔧 Dashboard API config
       DASHBOARDAPI_URL: ${DASHBOARDAPI_URL}

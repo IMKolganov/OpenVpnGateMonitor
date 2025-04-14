@@ -111,10 +111,13 @@ group nogroup
 persist-key
 persist-tun
 
+crl-verify $EASYRSA_DIR/pki/crl.pem
+
 status $DATA_DIR/openvpn-status.log
 status-version 3
 log $DATA_DIR/openvpn.log
 log-append $DATA_DIR/openvpn.log
+syslog
 
 management 0.0.0.0 $MGMT_PORT
 
@@ -127,6 +130,16 @@ echo "Clearing logs..."
 truncate -s 0 "$DATA_DIR/openvpn.log" || touch "$DATA_DIR/openvpn.log"
 truncate -s 0 "$DATA_DIR/openvpn-status.log" || touch "$DATA_DIR/openvpn-status.log"
 chmod 777 "$DATA_DIR/openvpn.log" "$DATA_DIR/openvpn-status.log"
+
+# Ensure crl.pem exists
+if [ ! -f "$EASYRSA_DIR/pki/crl.pem" ]; then
+    echo "Generating crl.pem (empty revocation list)..."
+    cd "$EASYRSA_DIR"
+    ./easyrsa gen-crl
+else
+    echo "crl.pem already exists."
+fi
+chmod 644 "$EASYRSA_DIR/pki/crl.pem"
 
 # Add read/execute permissions to everything inside DATA_DIR
 echo "Setting permissions for $DATA_DIR recursively..."

@@ -135,6 +135,7 @@ chmod 777 "$DATA_DIR/openvpn.log" "$DATA_DIR/openvpn-status.log"
 if [ ! -f "$EASYRSA_DIR/pki/crl.pem" ]; then
     echo "Generating crl.pem (empty revocation list)..."
     cd "$EASYRSA_DIR"
+    export EASYRSA_PKI="$EASYRSA_DIR/pki"
     ./easyrsa gen-crl
 else
     echo "crl.pem already exists."

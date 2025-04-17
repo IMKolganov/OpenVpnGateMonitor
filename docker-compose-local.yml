@@ -27,7 +27,12 @@ services:
       DB_CONNECTION_STRING_DATAGATE: ${DB_CONNECTION_STRING_DATAGATE:-Host=postgres_backend;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend}
       DB_DEFAULT_SCHEMA: xgb_dashopnvpn
       DB_MIGRATION_TABLE: __EFMigrationsHistoryDashboardVpn
-      JWT_SECRET:      
+      JWT_SECRET:
+      # 📊 Elasticsearch config
+      ELASTIC_URI: ${ELASTIC_URI:-http://elasticsearch:9200}
+      ELASTIC_USERNAME: ${ELASTIC_USERNAME:-elastic}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-your-password}
+      ELASTIC_INDEX_FORMAT: ${ELASTIC_INDEX_FORMAT:-OpenVPNGateMonitor-dev-logs-{0:yyyy.MM.dd}}
 
   frontend:
     build: 

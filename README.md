@@ -18,25 +18,25 @@ cd OpenVPNGateMonitor
 
 ### 2. Configure environment variables
 
-The `.env.local` file is already included in the repository. You can modify it if needed to match your environment.
+The `.env.prod.x64` file is already included in the repository. You can modify it if needed to match your environment.
 
 ### 3. Start the project
 
 ```bash
-docker compose --env-file .env.local up --force-recreate --pull always
+docker compose --env-file .env.prod.x64 up --force-recreate --pull always
 ```
 
 This command will:
 
 - Recreate all containers
 - Always pull the latest images
-- Use the environment configuration from `.env.local`
+- Use the environment configuration from `.env.prod.x64`
 
 ## 📦 Project Structure
 
 - `backend/` — Backend services
 - `frontend/` — React-based UI
-- `.env.local` — Environment variables for Docker Compose
+- `.env.prod.x64` — Environment variables for Docker Compose
 - `docker-compose.yml` — Service definitions
 
 ## 📈 Features

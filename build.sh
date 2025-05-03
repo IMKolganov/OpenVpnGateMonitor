@@ -50,6 +50,9 @@ build_and_push backend
 # ─── BUILD TELEGRAM BOT ─────────────────────────────────────────────────
 build_and_push telegrambot
 
+# ─── BUILD OPENVPN ──────────────────────────────────────────────────────
+build_and_push openvpn
+
 # ─── BUILD FRONTEND (MULTIARCH) ─────────────────────────────────────────
 echo "🎨 Building frontend for amd64 + arm64..."
 

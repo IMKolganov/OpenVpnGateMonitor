@@ -3,7 +3,7 @@ name: Build and Deploy OpenVPNGateMonitor
 on:
   push:
     branches:
-      - main
+      - develop
 
 jobs:
   build-and-deploy:

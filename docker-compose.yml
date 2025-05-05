@@ -52,8 +52,6 @@ services:
     networks:
       - backend_network
       - tgbot_network
-    depends_on:
-      - postgres_telegrambot
     environment:
       TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-443}
       ASPNETCORE_URLS: http://0.0.0.0:${TELEGRAMBOT_PORT:-443}
@@ -61,7 +59,6 @@ services:
       HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
       AUTO_GENERATE_CERTIFICATE: ${AUTO_GENERATE_CERTIFICATE:-true}      
-      DB_CONNECTION_STRING: Host=postgres_telegrambot;Port=5432;Database=datagate_telegrambot;Username=telegrambot_user;Password=securepassword_telegrambot
       DB_DEFAULT_SCHEMA: xgb_botvpndev
       DB_MIGRATION_TABLE: __EFMigrationsHistoryTelegramBot
       CERTIFICATE_PFX_PATH: /app/datagatetgbot.pfx
@@ -89,9 +86,8 @@ services:
       - tgbot_network
 
   openvpn_udp:
-    build:
-      context: ./openvpn
-      dockerfile: Dockerfile
+    image: imkolganov/openvpn-gate-monitor-openvpn:latest
+    pull_policy: always
     container_name: openvpn_udp
     restart: unless-stopped
     networks:
@@ -111,9 +107,8 @@ services:
       MGMT_PORT: "5092"
 
   openvpn_tcp:
-    build:
-      context: ./openvpn
-      dockerfile: Dockerfile
+    image: imkolganov/openvpn-gate-monitor-openvpn:latest
+    pull_policy: always
     container_name: openvpn_tcp
     restart: unless-stopped
     networks:
@@ -147,26 +142,10 @@ services:
       POSTGRES_USER: backend_user
       POSTGRES_PASSWORD: securepassword_backend
 
-  postgres_telegrambot:
-    image: postgres:latest
-    container_name: datagate_postgres_telegrambot
-    restart: always
-    networks:
-      - backend_network
-    volumes:
-      - postgres_data_telegrambot:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-    environment:
-      POSTGRES_DB: datagate_telegrambot
-      POSTGRES_USER: telegrambot_user
-      POSTGRES_PASSWORD: securepassword_telegrambot
-
 volumes:
   openvpn_data_tcp:
   openvpn_data_udp:
   postgres_data_backend:
-  postgres_data_telegrambot:
   geolite_data:
 
 networks:

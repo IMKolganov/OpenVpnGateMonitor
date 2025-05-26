@@ -28,14 +28,13 @@ services:
       DB_DEFAULT_SCHEMA: xgb_dashopnvpn
       DB_MIGRATION_TABLE: __EFMigrationsHistoryDashboardVpn
       JWT_SECRET:
-      # 📊 Elasticsearch config
       ELASTIC_URI: ${ELASTIC_URI:-http://elasticsearch:9200}
       ELASTIC_USERNAME: ${ELASTIC_USERNAME:-elastic}
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-your-password}
       ELASTIC_INDEX_FORMAT: ${ELASTIC_INDEX_FORMAT:-OpenVPNGateMonitor-dev-logs-{0:yyyy.MM.dd}}
 
   frontend:
-    build: 
+    build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: open-vpn-gate-monitor-frontend
@@ -50,7 +49,7 @@ services:
       BACKEND_URL: http://backend:5581
 
   telegrambot:
-    build: 
+    build:
       context: ./telegrambot
       dockerfile: Dockerfile
       args:
@@ -61,22 +60,27 @@ services:
     networks:
       - backend_network
       - tgbot_network
-    depends_on:
-      - postgres_telegrambot
     environment:
-      ASPNETCORE_URLS: http://0.0.0.0:${TELEGRAMBOT_PORT}:${TELEGRAMBOT_PORT}
-      TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:?TELEGRAMBOT_PORT is required}
-      TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN}
-      TELEGRAM_WEBHOOK: ${TELEGRAM_WEBHOOK}
+      TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-8443}
+      ASPNETCORE_URLS: http://0.0.0.0:${TELEGRAMBOT_PORT:-8443}
+      TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
+      HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
-      DB_CONNECTION_STRING: Host=postgres_telegrambot;Port=5432;Database=datagate_telegrambot;Username=telegrambot_user;Password=securepassword_telegrambot
-      DB_DEFAULT_SCHEMA: xgb_botvpndev
-      DB_MIGRATION_TABLE: __EFMigrationsHistoryTelegramBot
-      CERTIFICATE_PATH: /app/datagatetgbot.pem
+      AUTO_GENERATE_CERTIFICATE: ${AUTO_GENERATE_CERTIFICATE:-true}
+      CERTIFICATE_PFX_PATH: /app/datagatetgbot.pfx
+      CERTIFICATE_PEM_PATH: /app/datagatetgbot.pem
+      DASHBOARDAPI_URL: ${DASHBOARDAPI_URL:-http://backend:5581/api}
+      DASHBOARDAPI_CLIENTID: ${DASHBOARDAPI_CLIENTID:-your-client-id}
+      DASHBOARDAPI_CLIENTSECRET: ${DASHBOARDAPI_CLIENTSECRET:-your-client-secret}
+      ELASTIC_URI: ${ELASTIC_URI:-http://elasticsearch:9200}
+      ELASTIC_USERNAME: ${ELASTIC_USERNAME:-elastic}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-your-password}
+      ELASTIC_INDEX_FORMAT: ${ELASTIC_INDEX_FORMAT:-DataGateVPNBot-dev-logs-{0:yyyy.MM.dd}}
     ports:
-      - "${TELEGRAMBOT_PORT}:${TELEGRAMBOT_PORT}"
+      - "${TELEGRAMBOT_PORT:-8443}:${TELEGRAMBOT_PORT:-8443}"
     volumes:
       - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem:ro
+      - ./telegrambot/datagatetgbot.pfx:/app/datagatetgbot.pfx:ro
 
   redis:
     image: redis:latest
@@ -101,9 +105,12 @@ services:
       - openvpn_data_udp:/openvpn-udp
     ports:
       - "1194:1194/udp"
+      - "5010:5010"
     environment:
+      EASY_RSA_PATH: "/openvpn-udp/easy-rsa"
       DATA_DIR: /openvpn-udp
       PORT: "1194"
+      API_PORT: 5010
       PROTO: udp
       MGMT_PORT: "5092"
 
@@ -123,9 +130,12 @@ services:
       - openvpn_data_tcp:/openvpn-tcp
     ports:
       - "1195:1195"
+      - "5011:5011"
     environment:
+      EASY_RSA_PATH: "/openvpn-tcp/easy-rsa"
       DATA_DIR: /openvpn-tcp
       PORT: "1195"
+      API_PORT: 5011
       PROTO: tcp
       MGMT_PORT: "5093"
 
@@ -144,26 +154,10 @@ services:
       POSTGRES_USER: backend_user
       POSTGRES_PASSWORD: securepassword_backend
 
-  postgres_telegrambot:
-    image: postgres:latest
-    container_name: datagate_postgres_telegrambot
-    restart: always
-    networks:
-      - backend_network
-    volumes:
-      - postgres_data_telegrambot:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-    environment:
-      POSTGRES_DB: datagate_telegrambot
-      POSTGRES_USER: telegrambot_user
-      POSTGRES_PASSWORD: securepassword_telegrambot
-
 volumes:
   openvpn_data_tcp:
   openvpn_data_udp:
   postgres_data_backend:
-  postgres_data_telegrambot:
   geolite_data:
 
 networks:

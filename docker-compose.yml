@@ -107,7 +107,8 @@ services:
       PORT: "1194"
       API_PORT: 5010
       PROTO: udp
-      MGMT_PORT: "5092"
+      OpenVpnManagement__Port: "5092"
+      OpenVpnManagement__Host: "localhost"
       BACKEND__BASEURL: "http://backend:5581/"
 
   openvpn_tcp:
@@ -133,7 +134,8 @@ services:
       PORT: "1195"
       API_PORT: 5011
       PROTO: tcp
-      MGMT_PORT: "5093"
+      OpenVpnManagement__Port: "5093"
+      OpenVpnManagement__Host: "localhost"
       BACKEND__BASEURL: "http://backend:5581/"
 
   postgres_backend:

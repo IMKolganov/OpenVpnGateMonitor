@@ -54,7 +54,6 @@ services:
       - tgbot_network
     environment:
       TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-443}
-      ASPNETCORE_URLS: http://0.0.0.0:${TELEGRAMBOT_PORT:-443}
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
       HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
@@ -77,13 +76,6 @@ services:
 
     ports:
       - "${TELEGRAMBOT_PORT:-443}:${TELEGRAMBOT_PORT:-443}"
-
-  telegrambot_redis:
-    image: redis:latest
-    container_name: telegrambot_redis
-    restart: always
-    networks:
-      - tgbot_network
 
   openvpn_udp:
     image: imkolganov/openvpn-gate-monitor-openvpn:latest

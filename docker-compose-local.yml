@@ -61,8 +61,7 @@ services:
       - backend_network
       - tgbot_network
     environment:
-      TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-8443}
-      ASPNETCORE_URLS: http://0.0.0.0:${TELEGRAMBOT_PORT:-8443}
+      TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-443}
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
       HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
@@ -77,17 +76,7 @@ services:
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-your-password}
       ELASTIC_INDEX_FORMAT: ${ELASTIC_INDEX_FORMAT:-DataGateVPNBot-dev-logs-{0:yyyy.MM.dd}}
     ports:
-      - "${TELEGRAMBOT_PORT:-8443}:${TELEGRAMBOT_PORT:-8443}"
-    volumes:
-      - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem:ro
-      - ./telegrambot/datagatetgbot.pfx:/app/datagatetgbot.pfx:ro
-
-  redis:
-    image: redis:latest
-    container_name: redis
-    restart: always
-    networks:
-      - tgbot_network
+      - "${TELEGRAMBOT_PORT:-443}:${TELEGRAMBOT_PORT:-443}"
 
   openvpn_udp:
     build:

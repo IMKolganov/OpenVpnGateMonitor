@@ -1,0 +1,35 @@
+services:
+  openvpn_udp_local:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openvpn_udp_local
+    restart: unless-stopped
+    networks:
+      - backend_network
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    volumes:
+      - ./openvpn/data/openvpn_udp:/openvpn-udp
+    ports:
+      - "1194:1194/udp"
+      - "5010:5010"
+      - "5092:5092"
+    environment:
+      EASY_RSA_PATH: "/openvpn-udp/easy-rsa"
+      DATA_DIR: /openvpn-udp
+      PORT: "1194"
+      API_PORT: 5010
+      PROTO: udp
+      OpenVpnManagement__Port: "5092"
+      OpenVpnManagement__Host: "localhost"
+      BACKEND__BASEURL: "http://backend:5581/"
+
+volumes:
+  openvpn_data_udp:
+
+networks:
+  backend_network:
+    driver: bridge

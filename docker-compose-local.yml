@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   backend:
     build:
@@ -14,9 +12,7 @@ services:
       - openvpn_network
       - backend_network
     volumes:
-      - openvpn_data_tcp:/openvpn-tcp
-      - openvpn_data_udp:/openvpn-udp
-      - geolite_data:/app/GeoLite
+      - backend_data:/app/resources
     ports:
       - "5581:5581"
     depends_on:
@@ -155,7 +151,7 @@ volumes:
   openvpn_data_tcp:
   openvpn_data_udp:
   postgres_data_backend:
-  geolite_data:
+  backend_data:
 
 networks:
   openvpn_network:

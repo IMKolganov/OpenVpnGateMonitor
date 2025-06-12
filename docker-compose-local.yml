@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   backend:
     build:
@@ -14,9 +12,7 @@ services:
       - openvpn_network
       - backend_network
     volumes:
-      - openvpn_data_tcp:/openvpn-tcp
-      - openvpn_data_udp:/openvpn-udp
-      - geolite_data:/app/GeoLite
+      - backend_data:/app/resources
     ports:
       - "5581:5581"
     depends_on:
@@ -61,8 +57,7 @@ services:
       - backend_network
       - tgbot_network
     environment:
-      TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-8443}
-      ASPNETCORE_URLS: http://0.0.0.0:${TELEGRAMBOT_PORT:-8443}
+      TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-443}
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
       HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
@@ -77,17 +72,7 @@ services:
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-your-password}
       ELASTIC_INDEX_FORMAT: ${ELASTIC_INDEX_FORMAT:-DataGateVPNBot-dev-logs-{0:yyyy.MM.dd}}
     ports:
-      - "${TELEGRAMBOT_PORT:-8443}:${TELEGRAMBOT_PORT:-8443}"
-    volumes:
-      - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem:ro
-      - ./telegrambot/datagatetgbot.pfx:/app/datagatetgbot.pfx:ro
-
-  redis:
-    image: redis:latest
-    container_name: redis
-    restart: always
-    networks:
-      - tgbot_network
+      - "${TELEGRAMBOT_PORT:-443}:${TELEGRAMBOT_PORT:-443}"
 
   openvpn_udp:
     build:
@@ -106,13 +91,15 @@ services:
     ports:
       - "1194:1194/udp"
       - "5010:5010"
+      - "5092:5092"
     environment:
       EASY_RSA_PATH: "/openvpn-udp/easy-rsa"
       DATA_DIR: /openvpn-udp
       PORT: "1194"
       API_PORT: 5010
       PROTO: udp
-      MGMT_PORT: "5092"
+      OpenVpnManagement__Port: "5092"
+      OpenVpnManagement__Host: "localhost"
       BACKEND__BASEURL: "http://backend:5581/"
 
   openvpn_tcp:
@@ -133,13 +120,15 @@ services:
     ports:
       - "1195:1195"
       - "5011:5011"
+      - "5093:5093"
     environment:
       EASY_RSA_PATH: "/openvpn-tcp/easy-rsa"
       DATA_DIR: /openvpn-tcp
       PORT: "1195"
       API_PORT: 5011
       PROTO: tcp
-      MGMT_PORT: "5093"
+      OpenVpnManagement__Port: "5093"
+      OpenVpnManagement__Host: "localhost"
       BACKEND__BASEURL: "http://backend:5581/"
 
   postgres_backend:
@@ -162,7 +151,7 @@ volumes:
   openvpn_data_tcp:
   openvpn_data_udp:
   postgres_data_backend:
-  geolite_data:
+  backend_data:
 
 networks:
   openvpn_network:

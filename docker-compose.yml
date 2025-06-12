@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   backend:
     image: imkolganov/openvpn-gate-monitor-backend:latest
@@ -10,9 +8,7 @@ services:
       - openvpn_network
       - backend_network
     volumes:
-      - openvpn_data_tcp:/openvpn-tcp
-      - openvpn_data_udp:/openvpn-udp
-      - geolite_data:/app/GeoLite
+      - backend_data:/app/resources
     ports:
       - "5581:5581"
     depends_on:
@@ -54,7 +50,6 @@ services:
       - tgbot_network
     environment:
       TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-443}
-      ASPNETCORE_URLS: http://0.0.0.0:${TELEGRAMBOT_PORT:-443}
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
       HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
@@ -78,13 +73,6 @@ services:
     ports:
       - "${TELEGRAMBOT_PORT:-443}:${TELEGRAMBOT_PORT:-443}"
 
-  telegrambot_redis:
-    image: redis:latest
-    container_name: telegrambot_redis
-    restart: always
-    networks:
-      - tgbot_network
-
   openvpn_udp:
     image: imkolganov/openvpn-gate-monitor-openvpn:latest
     pull_policy: always
@@ -107,7 +95,8 @@ services:
       PORT: "1194"
       API_PORT: 5010
       PROTO: udp
-      MGMT_PORT: "5092"
+      OpenVpnManagement__Port: "5092"
+      OpenVpnManagement__Host: "localhost"
       BACKEND__BASEURL: "http://backend:5581/"
 
   openvpn_tcp:
@@ -133,7 +122,8 @@ services:
       PORT: "1195"
       API_PORT: 5011
       PROTO: tcp
-      MGMT_PORT: "5093"
+      OpenVpnManagement__Port: "5093"
+      OpenVpnManagement__Host: "localhost"
       BACKEND__BASEURL: "http://backend:5581/"
 
   postgres_backend:
@@ -156,7 +146,7 @@ volumes:
   openvpn_data_tcp:
   openvpn_data_udp:
   postgres_data_backend:
-  geolite_data:
+  backend_data:
 
 networks:
   openvpn_network:

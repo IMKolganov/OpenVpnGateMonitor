@@ -1,3 +1,7 @@
 openvpn-data-udp
 openvpn-data-tcp
 .env.my
+*.pem
+*.crt
+*.gz
+*.key

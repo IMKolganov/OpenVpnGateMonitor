@@ -74,6 +74,7 @@ services:
 
     ports:
       - "${TELEGRAMBOT_PORT:-443}:${TELEGRAMBOT_PORT:-443}"
+      - "${TELEGRAMBOT_PORT_2:-80}:${TELEGRAMBOT_PORT_2:-80}"
 
   openvpn_udp:
     image: imkolganov/openvpn-gate-monitor-openvpn:latest

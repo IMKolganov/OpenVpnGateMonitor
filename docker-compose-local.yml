@@ -18,6 +18,7 @@ services:
     depends_on:
       - postgres_backend
     environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://0.0.0.0:5581
       DOTNET_RUNNING_IN_CONTAINER: "true"
       DB_CONNECTION_STRING_DATAGATE: ${DB_CONNECTION_STRING_DATAGATE:-Host=postgres_backend;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend}
@@ -57,6 +58,7 @@ services:
       - backend_network
       - tgbot_network
     environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-443}
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
       HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
@@ -93,6 +95,7 @@ services:
       - "5010:5010"
       - "5092:5092"
     environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       EASY_RSA_PATH: "/openvpn-udp/easy-rsa"
       DATA_DIR: /openvpn-udp
       PORT: "1194"
@@ -122,6 +125,7 @@ services:
       - "5011:5011"
       - "5093:5093"
     environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       EASY_RSA_PATH: "/openvpn-tcp/easy-rsa"
       DATA_DIR: /openvpn-tcp
       PORT: "1195"

@@ -14,7 +14,7 @@ jobs:
       TARGETARCH: arm64
       BUILD_CONFIGURATION: Debug
       ASPNETCORE_ENVIRONMENT: Development
-      TELEGRAMBOT_PORT: 88
+      TELEGRAMBOT_PORT: 443
 
     steps:
       - name: Clean workspace before checkout

@@ -5,3 +5,5 @@ openvpn-data-tcp
 *.crt
 *.gz
 *.key
+.idea/
+.vs/

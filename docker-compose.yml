@@ -103,6 +103,9 @@ services:
       OpenVpnManagement__Port: "5092"
       OpenVpnManagement__Host: "localhost"
       BACKEND__BASEURL: "http://backend:5581/"
+      WAN_IF: eth0
+      VPN_SUBNET: "10.50.29.0"
+      VPN_NETMASK: "255.255.255.0"
 
   openvpn_tcp:
     image: imkolganov/openvpn-gate-monitor-openvpn:latest
@@ -131,6 +134,9 @@ services:
       OpenVpnManagement__Port: "5093"
       OpenVpnManagement__Host: "localhost"
       BACKEND__BASEURL: "http://backend:5581/"
+      WAN_IF: eth0
+      VPN_SUBNET: "10.50.28.0"
+      VPN_NETMASK: "255.255.255.0"
 
   postgres_backend:
     image: postgres:latest

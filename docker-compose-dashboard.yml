@@ -11,8 +11,6 @@ services:
       - backend_data:/app/resources
     ports:
       - "5581:5581"
-    depends_on:
-      - postgres_backend
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://0.0.0.0:5581

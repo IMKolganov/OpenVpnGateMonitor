@@ -55,9 +55,7 @@ services:
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
       HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
-      AUTO_GENERATE_CERTIFICATE: ${AUTO_GENERATE_CERTIFICATE:-true}      
-      DB_DEFAULT_SCHEMA: xgb_botvpndev
-      DB_MIGRATION_TABLE: __EFMigrationsHistoryTelegramBot
+      AUTO_GENERATE_CERTIFICATE: ${AUTO_GENERATE_CERTIFICATE:-true}
       CERTIFICATE_PFX_PATH: /app/certificates/datagatetgbot.pfx
       CERTIFICATE_PEM_PATH: /app/certificates/datagatetgbot.pem
       CERTIFICATE_KEY_PATH: /app/certificates/datagatetgbot.key

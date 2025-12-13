@@ -54,7 +54,7 @@ services:
       - tgbot_data:/app/resources
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
-      TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-443}
+      TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-5583}
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
       HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
@@ -77,8 +77,8 @@ services:
       ELASTIC_INDEX_FORMAT: ${ELASTIC_INDEX_FORMAT:-DataGateVPNBot-dev-logs-{0:yyyy.MM.dd}}
 
     ports:
-      - "${TELEGRAMBOT_PORT:-443}:${TELEGRAMBOT_PORT:-443}"
-      - "${TELEGRAMBOT_PORT_2:-80}:${TELEGRAMBOT_PORT_2:-80}"
+      - "${TELEGRAMBOT_PORT:-5583}:${TELEGRAMBOT_PORT:-5583}"
+      - "${TELEGRAMBOT_PORT_2:-5584}:${TELEGRAMBOT_PORT_2:-5584}"
 
   openvpn_udp:
     image: imkolganov/openvpn-gate-monitor-openvpn:latest

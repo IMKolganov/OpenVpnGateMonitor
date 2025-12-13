@@ -17,15 +17,20 @@ services:
       - "5581:5581"
     depends_on:
       - postgres_backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://0.0.0.0:5581
       DOTNET_RUNNING_IN_CONTAINER: "true"
-      DB_CONNECTION_STRING_DATAGATE: ${DB_CONNECTION_STRING_DATAGATE:-Host=postgres_backend;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend}
+
+      # DB on host (or via host port back to postgres container)
+      DB_CONNECTION_STRING_DATAGATE: ${DB_CONNECTION_STRING_DATAGATE:-Host=host.docker.internal;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend}
       DB_DEFAULT_SCHEMA: xgb_dashopnvpn
       DB_MIGRATION_TABLE: __EFMigrationsHistoryDashboardVpn
-      JWT_SECRET:
-      ELASTIC_URI: ${ELASTIC_URI:-http://elasticsearch:9200}
+
+      # Elastic on host
+      ELASTIC_URI: ${ELASTIC_URI:-http://host.docker.internal:9200}
       ELASTIC_USERNAME: ${ELASTIC_USERNAME:-elastic}
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-your-password}
       ELASTIC_INDEX_FORMAT: ${ELASTIC_INDEX_FORMAT:-OpenVPNGateMonitor-dev-logs-{0:yyyy.MM.dd}}
@@ -42,8 +47,11 @@ services:
       - "5582:5582"
     depends_on:
       - backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      BACKEND_URL: http://backend:5581
+      # backend via host
+      BACKEND_URL: http://host.docker.internal:5581
 
   telegrambot:
     build:
@@ -57,22 +65,31 @@ services:
     networks:
       - backend_network
       - tgbot_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+
       TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-443}
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
-      HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
+      HOST_ADDRESS: localhost
+
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
       AUTO_GENERATE_CERTIFICATE: ${AUTO_GENERATE_CERTIFICATE:-true}
       CERTIFICATE_PFX_PATH: /app/datagatetgbot.pfx
       CERTIFICATE_PEM_PATH: /app/datagatetgbot.pem
-      DASHBOARDAPI_URL: ${DASHBOARDAPI_URL:-http://backend:5581/api}
+
+      # backend via host
+      DASHBOARDAPI_URL: http://host.docker.internal:5581/api
       DASHBOARDAPI_CLIENTID: ${DASHBOARDAPI_CLIENTID:-your-client-id}
       DASHBOARDAPI_CLIENTSECRET: ${DASHBOARDAPI_CLIENTSECRET:-your-client-secret}
-      ELASTIC_URI: ${ELASTIC_URI:-http://elasticsearch:9200}
+
+      # elastic via host
+      ELASTIC_URI: ${ELASTIC_URI:-http://host.docker.internal:9200}
       ELASTIC_USERNAME: ${ELASTIC_USERNAME:-elastic}
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-your-password}
       ELASTIC_INDEX_FORMAT: ${ELASTIC_INDEX_FORMAT:-DataGateVPNBot-dev-logs-{0:yyyy.MM.dd}}
+
     ports:
       - "${TELEGRAMBOT_PORT:-443}:${TELEGRAMBOT_PORT:-443}"
 
@@ -94,16 +111,23 @@ services:
       - "1194:1194/udp"
       - "5010:5010"
       - "5092:5092"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+
       EASY_RSA_PATH: "/openvpn-udp/easy-rsa"
       DATA_DIR: /openvpn-udp
       PORT: "1194"
       API_PORT: 5010
       PROTO: udp
+
+      # management остаётся localhost внутри контейнера — это ок
+      OpenVpnManagement__Host: localhost
       OpenVpnManagement__Port: "5092"
-      OpenVpnManagement__Host: "localhost"
-      BACKEND__BASEURL: "http://backend:5581/"
+
+      # backend via host
+      BACKEND__BASEURL: http://host.docker.internal:5581/
 
   openvpn_tcp:
     build:
@@ -124,16 +148,23 @@ services:
       - "1195:1195"
       - "5011:5011"
       - "5093:5093"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+
       EASY_RSA_PATH: "/openvpn-tcp/easy-rsa"
       DATA_DIR: /openvpn-tcp
       PORT: "1195"
       API_PORT: 5011
       PROTO: tcp
+
+      # management тоже внутри контейнера
+      OpenVpnManagement__Host: localhost
       OpenVpnManagement__Port: "5093"
-      OpenVpnManagement__Host: "localhost"
-      BACKEND__BASEURL: "http://backend:5581/"
+
+      # backend via host
+      BACKEND__BASEURL: http://host.docker.internal:5581/
 
   postgres_backend:
     image: postgres:latest
@@ -143,7 +174,7 @@ services:
       - backend_network
       - openvpn_network
     volumes:
-      - postgres_data_backend:/var/lib/postgresql/data
+      - postgres_data_backend:/var/lib/postgresql
     ports:
       - "5432:5432"
     environment:

@@ -148,7 +148,7 @@ services:
       - backend_network
       - openvpn_network
     volumes:
-      - postgres_data_backend:/var/lib/postgresql/data
+      - postgres_data_backend:/var/lib/postgresql
     ports:
       - "5432:5432"
     environment:

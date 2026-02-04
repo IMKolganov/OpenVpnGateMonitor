@@ -22,6 +22,7 @@ services:
       DB_MIGRATION_TABLE: __EFMigrationsHistoryDashboardVpn
       JWT_SECRET: ${JWT_SECRET:-your_jwt_secret}
       GoogleAuth__ClientId: ${GoogleAuth__ClientId:-your_google_client_id}
+      GoogleAuth__IosClientId: ${GoogleAuth__IosClientId:-your_google_ios_client_id}
       # 📊 Elasticsearch config
       ELASTIC_URI: ${ELASTIC_URI:-http://elasticsearch:9200}
       ELASTIC_USERNAME: ${ELASTIC_USERNAME:-elastic}

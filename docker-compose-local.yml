@@ -23,14 +23,24 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://0.0.0.0:5581
       DOTNET_RUNNING_IN_CONTAINER: "true"
-
       # DB on host (or via host port back to postgres container)
-      DB_CONNECTION_STRING_DATAGATE: ${DB_CONNECTION_STRING_DATAGATE:-Host=host.docker.internal;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend}
+      DB_CONNECTION_STRING_DATAGATE: ${DB_CONNECTION_STRING_DATAGATE:-Host=postgres_backend;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend}
       DB_DEFAULT_SCHEMA: xgb_dashopnvpn
       DB_MIGRATION_TABLE: __EFMigrationsHistoryDashboardVpn
 
-      # Elastic on host
-      ELASTIC_URI: ${ELASTIC_URI:-http://host.docker.internal:9200}
+      #JWT
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret}
+      Jwt__RefreshPepper: ${Jwt__RefreshPepper:-dev-only-pepper}
+
+      # GoogleAuth config
+      GoogleAuth__ClientId: ${GoogleAuth__ClientId:-your_google_client_id}
+      GoogleAuth__IosClientId: ${GoogleAuth__IosClientId:-your_google_ios_client_id}
+      GoogleAuth__ClientSecret: ${GoogleAuth__ClientSecret:-your_google_secret}
+      GoogleAuth__DesktopClientId: ${GoogleAuth__DesktopClientId:-your_google_desktop_client_id}
+      GoogleAuth__DesktopClientSecret: ${GoogleAuth__DesktopClientSecret:-your_google_desktop_secret}
+
+      # 📊 Elasticsearch config
+      ELASTIC_URI: ${ELASTIC_URI:-http://elasticsearch:9200}
       ELASTIC_USERNAME: ${ELASTIC_USERNAME:-elastic}
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-your-password}
       ELASTIC_INDEX_FORMAT: ${ELASTIC_INDEX_FORMAT:-OpenVPNGateMonitor-dev-logs-{0:yyyy.MM.dd}}
@@ -122,7 +132,7 @@ services:
       API_PORT: 5010
       PROTO: udp
 
-      # management остаётся localhost внутри контейнера — это ок
+      # management
       OpenVpnManagement__Host: localhost
       OpenVpnManagement__Port: "5092"
 

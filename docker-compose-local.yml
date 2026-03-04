@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   backend:
     build:
@@ -14,20 +12,33 @@ services:
       - openvpn_network
       - backend_network
     volumes:
-      - openvpn_data_tcp:/openvpn-tcp
-      - openvpn_data_udp:/openvpn-udp
-      - geolite_data:/app/GeoLite
+      - backend_data:/app/resources
     ports:
       - "5581:5581"
     depends_on:
       - postgres_backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://0.0.0.0:5581
       DOTNET_RUNNING_IN_CONTAINER: "true"
+      # DB on host (or via host port back to postgres container)
       DB_CONNECTION_STRING_DATAGATE: ${DB_CONNECTION_STRING_DATAGATE:-Host=postgres_backend;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend}
       DB_DEFAULT_SCHEMA: xgb_dashopnvpn
       DB_MIGRATION_TABLE: __EFMigrationsHistoryDashboardVpn
-      JWT_SECRET:
+
+      #JWT
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret}
+      Jwt__RefreshPepper: ${Jwt__RefreshPepper:-dev-only-pepper}
+
+      # GoogleAuth config
+      GoogleAuth__ClientId: ${GoogleAuth__ClientId:-your_google_client_id}
+      GoogleAuth__IosClientId: ${GoogleAuth__IosClientId:-your_google_ios_client_id}
+      GoogleAuth__ClientSecret: ${GoogleAuth__ClientSecret:-your_google_secret}
+      GoogleAuth__DesktopClientId: ${GoogleAuth__DesktopClientId:-your_google_desktop_client_id}
+      GoogleAuth__DesktopClientSecret: ${GoogleAuth__DesktopClientSecret:-your_google_desktop_secret}
+
       # 📊 Elasticsearch config
       ELASTIC_URI: ${ELASTIC_URI:-http://elasticsearch:9200}
       ELASTIC_USERNAME: ${ELASTIC_USERNAME:-elastic}
@@ -35,7 +46,7 @@ services:
       ELASTIC_INDEX_FORMAT: ${ELASTIC_INDEX_FORMAT:-OpenVPNGateMonitor-dev-logs-{0:yyyy.MM.dd}}
 
   frontend:
-    build: 
+    build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: open-vpn-gate-monitor-frontend
@@ -46,11 +57,14 @@ services:
       - "5582:5582"
     depends_on:
       - backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      BACKEND_URL: http://backend:5581
+      # backend via host
+      BACKEND_URL: http://host.docker.internal:5581
 
   telegrambot:
-    build: 
+    build:
       context: ./telegrambot
       dockerfile: Dockerfile
       args:
@@ -61,29 +75,33 @@ services:
     networks:
       - backend_network
       - tgbot_network
-    depends_on:
-      - postgres_telegrambot
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      ASPNETCORE_URLS: http://0.0.0.0:${TELEGRAMBOT_PORT}:${TELEGRAMBOT_PORT}
-      TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:?TELEGRAMBOT_PORT is required}
-      TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN}
-      TELEGRAM_WEBHOOK: ${TELEGRAM_WEBHOOK}
-      USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
-      DB_CONNECTION_STRING: Host=postgres_telegrambot;Port=5432;Database=datagate_telegrambot;Username=telegrambot_user;Password=securepassword_telegrambot
-      DB_DEFAULT_SCHEMA: xgb_botvpndev
-      DB_MIGRATION_TABLE: __EFMigrationsHistoryTelegramBot
-      CERTIFICATE_PATH: /app/datagatetgbot.pem
-    ports:
-      - "${TELEGRAMBOT_PORT}:${TELEGRAMBOT_PORT}"
-    volumes:
-      - ./telegrambot/datagatetgbot.pem:/app/datagatetgbot.pem:ro
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
 
-  redis:
-    image: redis:latest
-    container_name: redis
-    restart: always
-    networks:
-      - tgbot_network
+      TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-443}
+      TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
+      HOST_ADDRESS: localhost
+
+      USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
+      AUTO_GENERATE_CERTIFICATE: ${AUTO_GENERATE_CERTIFICATE:-true}
+      CERTIFICATE_PFX_PATH: /app/datagatetgbot.pfx
+      CERTIFICATE_PEM_PATH: /app/datagatetgbot.pem
+
+      # backend via host
+      DASHBOARDAPI_URL: http://host.docker.internal:5581/api
+      DASHBOARDAPI_CLIENTID: ${DASHBOARDAPI_CLIENTID:-your-client-id}
+      DASHBOARDAPI_CLIENTSECRET: ${DASHBOARDAPI_CLIENTSECRET:-your-client-secret}
+
+      # elastic via host
+      ELASTIC_URI: ${ELASTIC_URI:-http://host.docker.internal:9200}
+      ELASTIC_USERNAME: ${ELASTIC_USERNAME:-elastic}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-your-password}
+      ELASTIC_INDEX_FORMAT: ${ELASTIC_INDEX_FORMAT:-DataGateVPNBot-dev-logs-{0:yyyy.MM.dd}}
+
+    ports:
+      - "${TELEGRAMBOT_PORT:-443}:${TELEGRAMBOT_PORT:-443}"
 
   openvpn_udp:
     build:
@@ -101,11 +119,25 @@ services:
       - openvpn_data_udp:/openvpn-udp
     ports:
       - "1194:1194/udp"
+      - "5010:5010"
+      - "5092:5092"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+
+      EASY_RSA_PATH: "/openvpn-udp/easy-rsa"
       DATA_DIR: /openvpn-udp
       PORT: "1194"
+      API_PORT: 5010
       PROTO: udp
-      MGMT_PORT: "5092"
+
+      # management
+      OpenVpnManagement__Host: localhost
+      OpenVpnManagement__Port: "5092"
+
+      # backend via host
+      BACKEND__BASEURL: http://host.docker.internal:5581/
 
   openvpn_tcp:
     build:
@@ -115,6 +147,7 @@ services:
     restart: unless-stopped
     networks:
       - backend_network
+      - openvpn_network
     cap_add:
       - NET_ADMIN
     devices:
@@ -123,11 +156,25 @@ services:
       - openvpn_data_tcp:/openvpn-tcp
     ports:
       - "1195:1195"
+      - "5011:5011"
+      - "5093:5093"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+
+      EASY_RSA_PATH: "/openvpn-tcp/easy-rsa"
       DATA_DIR: /openvpn-tcp
       PORT: "1195"
+      API_PORT: 5011
       PROTO: tcp
-      MGMT_PORT: "5093"
+
+      # management тоже внутри контейнера
+      OpenVpnManagement__Host: localhost
+      OpenVpnManagement__Port: "5093"
+
+      # backend via host
+      BACKEND__BASEURL: http://host.docker.internal:5581/
 
   postgres_backend:
     image: postgres:latest
@@ -135,8 +182,9 @@ services:
     restart: always
     networks:
       - backend_network
+      - openvpn_network
     volumes:
-      - postgres_data_backend:/var/lib/postgresql/data
+      - postgres_data_backend:/var/lib/postgresql
     ports:
       - "5432:5432"
     environment:
@@ -144,27 +192,11 @@ services:
       POSTGRES_USER: backend_user
       POSTGRES_PASSWORD: securepassword_backend
 
-  postgres_telegrambot:
-    image: postgres:latest
-    container_name: datagate_postgres_telegrambot
-    restart: always
-    networks:
-      - backend_network
-    volumes:
-      - postgres_data_telegrambot:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-    environment:
-      POSTGRES_DB: datagate_telegrambot
-      POSTGRES_USER: telegrambot_user
-      POSTGRES_PASSWORD: securepassword_telegrambot
-
 volumes:
   openvpn_data_tcp:
   openvpn_data_udp:
   postgres_data_backend:
-  postgres_data_telegrambot:
-  geolite_data:
+  backend_data:
 
 networks:
   openvpn_network:

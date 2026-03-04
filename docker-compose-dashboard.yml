@@ -1,0 +1,47 @@
+services:
+  backend:
+    image: imkolganov/openvpn-gate-monitor-backend:latest
+    pull_policy: always
+    container_name: open-vpn-gate-monitor-backend
+    restart: always
+    networks:
+      - openvpn_network
+      - backend_network
+    volumes:
+      - backend_data:/app/resources
+    ports:
+      - "5581:5581"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_URLS: http://0.0.0.0:5581
+      DOTNET_RUNNING_IN_CONTAINER: "true"
+      DB_CONNECTION_STRING_DATAGATE: ${DB_CONNECTION_STRING_DATAGATE:-Host=postgres_backend;Port=5432;Database=datagate_backend;Username=backend_user;Password=securepassword_backend}
+      DB_DEFAULT_SCHEMA: xgb_dashopnvpn
+      DB_MIGRATION_TABLE: __EFMigrationsHistoryDashboardVpn
+      JWT_SECRET:
+      # 📊 Elasticsearch config
+      ELASTIC_URI: ${ELASTIC_URI:-http://elasticsearch:9200}
+      ELASTIC_USERNAME: ${ELASTIC_USERNAME:-elastic}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-your-password}
+      ELASTIC_INDEX_FORMAT: ${ELASTIC_INDEX_FORMAT:-OpenVPNGateMonitor-dev-logs-{0:yyyy.MM.dd}}
+
+  frontend:
+    image: imkolganov/openvpn-gate-monitor-frontend:latest
+    pull_policy: always
+    container_name: open-vpn-gate-monitor-frontend
+    restart: always
+    networks:
+      - openvpn_network
+    ports:
+      - "5582:5582"
+    depends_on:
+      - backend
+    environment:
+      BACKEND_URL: http://backend:5581
+
+volumes:
+  backend_data:
+
+networks:
+  backend_network:
+    driver: bridge

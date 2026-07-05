@@ -13,15 +13,17 @@ On **Free** and **Default** plans, VPN configs via the **Telegram bot** are issu
 
 The desktop/mobile client does **not** verify channel subscription itself. It shows onboarding when the backend reports non-compliance.
 
+**Do not ask the user for a numeric Telegram ID.** The bot knows the sender from `msg.From.Id`.
+
 **NuGet (required):**
 
 ```xml
-<PackageReference Include="DataGateMonitor.SharedModels" Version="1.0.38" />
+<PackageReference Include="DataGateMonitor.SharedModels" Version="1.0.41" />
 ```
 
-Types: `FreeTierAccessStatusResponse`, `RequestTelegramAccountLinkCodeRequest`, `RequestTelegramAccountLinkCodeResponse`.
+Types: `FreeTierAccessStatusResponse`, `RequestTelegramAccountLinkCodeRequest`, `RequestTelegramAccountLinkCodeResponse`, `CompleteTelegramAccountLinkFromAppRequest`, `CompleteTelegramAccountLinkResponse`.
 
-Do not use SharedModels versions below **1.0.38** for the link-code flow.
+Do not use SharedModels versions below **1.0.41** for the link-code flow.
 
 ---
 
@@ -61,19 +63,17 @@ else → show onboarding modal
 
 Call after login and when opening VPN section. Do **not** call the bot audit endpoint from the client.
 
-### 2. Request link code
+### 2. Link accounts — recommended mobile flow (app → bot)
 
 ```
 POST /api/auth/telegram/request-account-link-code
 Authorization: Bearer {token}
 Content-Type: application/json
 
-{
-  "telegramId": 123456789
-}
+{}
 ```
 
-`telegramId` is the numeric Telegram user ID that will enter the code in the bot. It must match `msg.From.Id` in the bot. The Telegram account must be registered in the bot (`/register`).
+Omit `telegramId`. The user completes linking in the Telegram bot; the bot supplies the sender id.
 
 **200:** `ApiResponse<RequestTelegramAccountLinkCodeResponse>`
 
@@ -86,29 +86,57 @@ Content-Type: application/json
 
 **Errors:**
 
-- **400** — already linked, no google/local identity, telegram not registered, blocked, etc.
+- **400** — already linked, no google/local identity, blocked, etc.
 - **404** — user not found
 
-The code is bound to the given `telegramId`. Another Telegram account cannot use a stolen code.
+**User steps:**
 
-### 3. User actions in onboarding UI
+1. Open the same Telegram bot (`/register` if needed).
+2. App shows `{code}` for ~15 minutes.
+3. User sends `/link_account CODE` or the 8-character code alone in private chat with the bot.
+
+### 3. Link accounts — alternative (bot → app)
+
+The bot issues a code; the user enters it in the app:
+
+```
+POST /api/auth/telegram/complete-account-link
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "code": "ABCD2345"
+}
+```
+
+**200:** `ApiResponse<CompleteTelegramAccountLinkResponse>`
+
+The bot calls `POST /api/auth/telegram/request-account-link-code-for-bot` (App token, not the client).
+
+### 4. Legacy (optional)
+
+You may pass a bound `telegramId` if you already know it (e.g. desktop). **Not for mobile.**
+
+```json
+{ "telegramId": 123456789 }
+```
+
+The Telegram account must be registered in the bot (`/register`).
+
+### 5. User actions in onboarding UI
 
 1. Subscribe to `requiredChannel`.
-2. **Or** link accounts:
-   - User opens the same Telegram bot (`/register` if needed).
-   - Client collects the user's Telegram ID (instruction or bot command).
-   - Call `POST request-account-link-code` with that `telegramId`.
-   - Show `{code}` for ~15 minutes.
-   - User enters in bot: `/link_account CODE` or sends the 8-character code in private chat.
-
+2. **Or** link accounts using flow **§2** (recommended) or **§3**.
 3. Poll `GET free-tier-access/status` again → `isCompliant` should become `true` (via `isMergedAccount`).
 
 ---
 
 ## Do not implement in the client
 
+- Do **not** show a field for numeric Telegram ID on mobile.
 - Do not call `POST /api/users/audit-free-tier-access/by-telegram/{id}` (bot App token only).
 - Do not call `POST /api/users/merge-telegram-google/by-link-code` (bot only).
+- Do not call `POST /api/auth/telegram/request-account-link-code-for-bot` (bot only).
 - Do not rely on grace for UX: grace starts on VPN attempt in the **bot**, not on status polling.
 - Do not log link codes in analytics/crash reports.
 
@@ -128,10 +156,12 @@ if (status.Data is { IsApplicable: true, IsCompliant: false })
 {
     if (status.Data.CanRequestAccountLinkCode)
     {
+        // Recommended on mobile: empty body — no TelegramId
         var link = await api.RequestTelegramAccountLinkCodeAsync(
             token,
-            new RequestTelegramAccountLinkCodeRequest { TelegramId = userTelegramId });
+            new RequestTelegramAccountLinkCodeRequest());
         ShowCode(link.Data.Code, link.Data.ExpiresInSeconds);
+        // User enters code in Telegram bot: /link_account CODE
     }
 }
 ```
@@ -142,6 +172,7 @@ if (status.Data is { IsApplicable: true, IsCompliant: false })
 
 1. Free user, Google only, not linked → modal, `canRequestAccountLinkCode=true`
 2. After merge → `isCompliant=true`, modal hidden
-3. Code requested for telegramId A, entered from telegramId B → rejected
-4. Pro user → `isApplicable=false`, no modal
-5. During bot grace → status may show `isGracePeriod=true`, `isCompliant=true`
+3. App requests code with `{}`, user enters code in bot → merge succeeds
+4. Bot-issued code entered in app via `complete-account-link` → merge succeeds
+5. Pro user → `isApplicable=false`, no modal
+6. During bot grace → status may show `isGracePeriod=true`, `isCompliant=true`

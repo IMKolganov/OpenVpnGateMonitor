@@ -14,6 +14,23 @@ alwaysApply: true
   - `<ProjectReference>` to `DataGateMonitor.SharedModels`
 - If `PackageReference` version is **not on nuget.org**: publish via `nuget/release/v*`, wait for indexing, then bump consumers — **do not** substitute local packages.
 
+## Publishing SharedModels (mandatory workflow)
+
+When DTOs change in `DataGateMonitor.SharedModels/`:
+
+1. **Bump** `<Version>`, `<AssemblyVersion>`, and `<FileVersion>` together in `DataGateMonitor.SharedModels.csproj`.
+2. **Commit** on the feature branch (source of truth for code).
+3. **Create and push** branch `nuget/release/v{X.Y.Z}` from that commit (CI reads version from **branch name** via `/p:PackageVersion=`).
+4. **Wait** for GitHub Actions **Publish NuGet** to finish successfully (`gh run watch`).
+5. **Verify on nuget.org** before touching consumers:
+   - `curl -s https://api.nuget.org/v3-flatcontainer/datagatemonitor.sharedmodels/index.json` contains the version
+   - `dotnet add package DataGateMonitor.SharedModels --version X.Y.Z` restores from nuget.org only
+   - Optional: confirm types exist in the DLL (`FreeTierAccessStatusResponse`, etc.)
+6. **Then** bump `<PackageReference Version="X.Y.Z" />` in `DataGateMonitor.csproj`, tests, and external clients.
+7. **Never** claim a version is "broken on nuget.org" without step 5. A failed local restore or local pack is **not** proof the published package is bad.
+8. **Never skip** a semver slot reactively (e.g. jump 1.0.35 → 1.0.37) unless nuget.org **already has** that version and `dotnet nuget push` returns duplicate — then use the next free version and document why.
+9. **Do not** use `dotnet pack -o /tmp/...` + extra `--source` to validate or unblock — if you need a pre-publish check, pack locally **without** adding a feed and inspect the `.nupkg` contents only; restore/build consumers **only** after nuget.org indexing.
+
 ## Frontend API client
 
 - **All** backend HTTP contracts (types + hooks) come from **Orval** (`npm run gen:api`) against `frontend/openapi/swagger.json` or live `/swagger/v1/swagger.json`.

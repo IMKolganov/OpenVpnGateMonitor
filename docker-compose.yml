@@ -48,6 +48,9 @@ services:
       EmailSender__UseSsl: ${EmailSender__UseSsl:-true}
       EmailSender__Username: ${EmailSender__Username:-smtp_user}
       EmailSender__Password: ${EmailSender__Password:-smtp_password}
+      # Free-tier channel subscription checks (getChatMember); same bot token as telegrambot service
+      TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-}
+      TELEGRAM_REQUIRED_CHANNEL_USERNAME: ${TELEGRAM_REQUIRED_CHANNEL_USERNAME:-DataGateVPNBot}
 
   frontend:
     image: imkolganov/datagate-monitor-frontend:latest
@@ -78,6 +81,7 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-5583}
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
+      TELEGRAM_REQUIRED_CHANNEL_USERNAME: ${TELEGRAM_REQUIRED_CHANNEL_USERNAME:-DataGateVPNBot}
       HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
       AUTO_GENERATE_CERTIFICATE: ${AUTO_GENERATE_CERTIFICATE:-true}

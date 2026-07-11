@@ -28,6 +28,17 @@ bash_supports_wait_n() {
   ((BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 1)))
 }
 
+format_duration() {
+  local secs=$1
+  if (( secs < 60 )); then
+    printf '%ds' "$secs"
+  elif (( secs < 3600 )); then
+    printf '%dm %ds' $((secs / 60)) $((secs % 60))
+  else
+    printf '%dh %dm' $((secs / 3600)) $(((secs % 3600) / 60))
+  fi
+}
+
 # Reap background build jobs in completion order (bash 5.1+ wait -n -p), else FIFO wait.
 reap_parallel_builds() {
   local -n _pids=$1
@@ -35,12 +46,31 @@ reap_parallel_builds() {
   local _logdir=$3
   local -n _ok_out=$4
   local -n _fail_out=$5
+  local _total=$6
+  local -n _start_times=$7
 
   declare -A _pid_to_name=()
-  local i _n=${#_pids[@]}
+  local i _n=${#_pids[@]} _done=0
   for i in "${!_pids[@]}"; do
     _pid_to_name[${_pids[$i]}]="${_names[$i]}"
   done
+
+  report_build_finish() {
+    local svc=$1 rc=$2
+    local elapsed=$(( $(date +%s) - ${_start_times[$svc]:-$(date +%s)} ))
+    ((_done++)) || true
+    local progress="[$_done/$_total]"
+    if [[ "$rc" -eq 0 ]]; then
+      _ok_out+=("$svc")
+      echo "✅ Finished: $svc ($(format_duration "$elapsed")) $progress"
+    else
+      _fail_out+=("$svc")
+      echo "❌ Build failed: $svc (exit $rc, $(format_duration "$elapsed")) $progress"
+      echo "--- tail ${_logdir}/${svc}.log (last 120 lines) ---"
+      tail -n 120 "${_logdir}/${svc}.log" 2>/dev/null || true
+      echo "--- (full log: ${_logdir}/${svc}.log) ---"
+    fi
+  }
 
   if bash_supports_wait_n; then
     while ((_n > 0)); do
@@ -48,16 +78,7 @@ reap_parallel_builds() {
       wait -n -p WPID
       rc=$?
       svc="${_pid_to_name[$WPID]:-pid-$WPID}"
-      if [[ "$rc" -eq 0 ]]; then
-        _ok_out+=("$svc")
-        echo "✅ Finished: $svc"
-      else
-        _fail_out+=("$svc")
-        echo "❌ Build failed: $svc (exit $rc)"
-        echo "--- tail ${_logdir}/${svc}.log (last 120 lines) ---"
-        tail -n 120 "${_logdir}/${svc}.log" 2>/dev/null || true
-        echo "--- (full log: ${_logdir}/${svc}.log) ---"
-      fi
+      report_build_finish "$svc" "$rc"
       ((_n--)) || true
     done
   else
@@ -65,15 +86,10 @@ reap_parallel_builds() {
     for i in "${!_pids[@]}"; do
       local rc=0 svc="${_names[$i]}"
       if wait "${_pids[$i]}"; then
-        _ok_out+=("$svc")
-        echo "✅ Finished: $svc"
+        report_build_finish "$svc" 0
       else
         rc=$?
-        _fail_out+=("$svc")
-        echo "❌ Build failed: $svc (exit $rc)"
-        echo "--- tail ${_logdir}/${svc}.log (last 120 lines) ---"
-        tail -n 120 "${_logdir}/${svc}.log" 2>/dev/null || true
-        echo "--- (full log: ${_logdir}/${svc}.log) ---"
+        report_build_finish "$svc" "$rc"
       fi
     done
   fi
@@ -191,21 +207,27 @@ for SVC in "${SERVICES[@]}"; do
 done
 
 if parallel_enabled && [[ ${#SERVICES[@]} -gt 1 ]]; then
-  echo "⚡ Parallel build for: ${SERVICES[*]}"
+  echo "⚡ Parallel build for: ${SERVICES[*]} (${#SERVICES[@]} services)"
   LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/datagate-monitor-build.XXXXXX")"
   echo "📋 Per-service logs: ${LOG_DIR}"
+  BUILD_WALL_START=$(date +%s)
   pids=()
   names=()
+  declare -A service_start_times=()
   for SVC in "${SERVICES[@]}"; do
+    service_start_times[$SVC]=$(date +%s)
     ( build_one_service "$SVC" >"${LOG_DIR}/${SVC}.log" 2>&1 ) &
     pids+=($!)
     names+=("$SVC")
+    echo "▶️  Started: $SVC (pid $!)"
   done
   ok=()
   fail=()
-  reap_parallel_builds pids names "$LOG_DIR" ok fail
+  reap_parallel_builds pids names "$LOG_DIR" ok fail "${#SERVICES[@]}" service_start_times
+  BUILD_WALL_ELAPSED=$(( $(date +%s) - BUILD_WALL_START ))
 
   echo "──────── Summary ────────"
+  echo "⏱  Total wall time: $(format_duration "$BUILD_WALL_ELAPSED") (parallel)"
   printf "✅ OK (%d): %s\n" "${#ok[@]}" "${ok[*]:-(none)}"
   printf "❌ Failed (%d): %s\n" "${#fail[@]}" "${fail[*]:-(none)}"
 
@@ -225,7 +247,18 @@ if parallel_enabled && [[ ${#SERVICES[@]} -gt 1 ]]; then
   echo "⚠️ BUILD_FAIL_SOFT=1: partial success (${#ok[@]} ok, ${#fail[@]} failed) — exiting 0. Logs: ${LOG_DIR}"
   exit 0
 else
+  BUILD_WALL_START=$(date +%s)
+  total=${#SERVICES[@]}
+  done_count=0
   for SVC in "${SERVICES[@]}"; do
+    ((done_count++)) || true
+    echo "▶️  Building $SVC [$done_count/$total]..."
+    svc_start=$(date +%s)
     build_one_service "$SVC"
+    svc_elapsed=$(( $(date +%s) - svc_start ))
+    echo "✅ Finished: $SVC ($(format_duration "$svc_elapsed")) [$done_count/$total]"
   done
+  BUILD_WALL_ELAPSED=$(( $(date +%s) - BUILD_WALL_START ))
+  echo "──────── Summary ────────"
+  echo "⏱  Total time: $(format_duration "$BUILD_WALL_ELAPSED") (sequential)"
 fi

@@ -76,7 +76,7 @@ build.sh            # Build/push datagate-monitor-* Docker images
 
 Override in `.env.prod.*` / `.env.dev.*`:
 
-- **Backend:** `DB_CONNECTION_STRING_DATAGATE`, `DB_DEFAULT_SCHEMA`, `JWT_SECRET` (≥16 chars), `ELASTIC_*`, `EmailSender__*`
+- **Backend:** `DB_CONNECTION_STRING_DATAGATE`, `DB_DEFAULT_SCHEMA`, `JWT_SECRET` (≥16 chars), `ELASTIC_*`, `EmailSender__*`, `Auth__PublicWebBaseUrl` (TV QR origin), `Auth__TvLoginSessionMinutes`
 - **Frontend (compose):** `BACKEND_INTERNAL_URL` — nginx proxy target inside Docker network
 - **Telegram bot:** `TELEGRAMBOT_BOT_TOKEN`, `DASHBOARDAPI_*`, `ELASTIC_*`
 - **OpenVPN sidecars:** `DATA_DIR`, `EASY_RSA_PATH`, `PORT`, `API_PORT`, `OpenVpnManagement__Port`, `BACKEND__BASEURL`

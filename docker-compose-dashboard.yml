@@ -19,6 +19,9 @@ services:
       DB_DEFAULT_SCHEMA: xgb_dashopnvpn
       DB_MIGRATION_TABLE: __EFMigrationsHistoryDashboardVpn
       JWT_SECRET: ${JWT_SECRET:-datagate_dev_jwt_secret_16}
+      # Public web origin for TV QR /tv/link (change when domain changes)
+      Auth__PublicWebBaseUrl: ${Auth__PublicWebBaseUrl:-https://YOUR_PUBLIC_WEB_HOST}
+      Auth__TvLoginSessionMinutes: ${Auth__TvLoginSessionMinutes:-5}
       # 📊 Elasticsearch config
       ELASTIC_URI: ${ELASTIC_URI:-http://elasticsearch:9200}
       ELASTIC_USERNAME: ${ELASTIC_USERNAME:-elastic}

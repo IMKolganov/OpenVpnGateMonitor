@@ -31,6 +31,9 @@ services:
       GoogleAuth__ClientSecret: ${GoogleAuth__ClientSecret:-your_google_secret}
       GoogleAuth__DesktopClientId: ${GoogleAuth__DesktopClientId:-your_google_desktop_client_id}
       GoogleAuth__DesktopClientSecret: ${GoogleAuth__DesktopClientSecret:-your_google_desktop_secret}
+      # Public web origin for TV QR /tv/link (change when domain changes)
+      Auth__PublicWebBaseUrl: ${Auth__PublicWebBaseUrl:-https://YOUR_PUBLIC_WEB_HOST}
+      Auth__TvLoginSessionMinutes: ${Auth__TvLoginSessionMinutes:-5}
       # 📊 Elasticsearch config
       ELASTIC_URI: ${ELASTIC_URI:-http://elasticsearch:9200}
       ELASTIC_USERNAME: ${ELASTIC_USERNAME:-elastic}

@@ -1,0 +1,102 @@
+# Overlay for OpenVPN node load tests (real OpenVPN+.NET container).
+#
+# Prerequisites:
+#   - Backend in Development with DevAuth__Enabled=true (issues OpenVpn microservice JWT)
+#   - OpenVPN node running (e.g. openvpn/docker-compose.local.yml) with API on :5009
+#
+# Examples:
+#   # API create+download ×150 + proxy WS ×150
+#   docker compose -f loadtests/docker-compose.loadtest.yml --profile load up --build --abort-on-container-exit
+#
+#   # Native openvpn clients ×150 (needs /dev/net/tun)
+#   docker compose -f loadtests/docker-compose.loadtest.yml --profile load-native up --build --abort-on-container-exit
+#
+#   # Proxy traffic soak against echo stub (no EasyRSA)
+#   docker compose -f loadtests/docker-compose.loadtest.yml --profile proxy-stub up --build --abort-on-container-exit
+
+services:
+  load-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    profiles: ["load"]
+    network_mode: host
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://127.0.0.1:5581}
+      OPENVPN_API_URL: ${OPENVPN_API_URL:-http://127.0.0.1:5009}
+      VPN_HOST: ${VPN_HOST:-127.0.0.1}
+      VPN_PORT: ${VPN_PORT:-1295}
+      VPN_PROTO: ${VPN_PROTO:-udp}
+      CONCURRENCY: ${CONCURRENCY:-150}
+      PROFILES_DIR: /tmp/ovpn-load-profiles
+    volumes:
+      - load_profiles:/tmp/ovpn-load-profiles
+    command: ["test_ovpn_issue_and_download.py"]
+
+  load-native:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    profiles: ["load-native"]
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    network_mode: host
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://127.0.0.1:5581}
+      OPENVPN_API_URL: ${OPENVPN_API_URL:-http://127.0.0.1:5009}
+      VPN_HOST: ${VPN_HOST:-127.0.0.1}
+      VPN_PORT: ${VPN_PORT:-1295}
+      VPN_PROTO: ${VPN_PROTO:-udp}
+      CONCURRENCY: ${CONCURRENCY:-150}
+      HOLD_SECONDS: ${HOLD_SECONDS:-5}
+      PROFILES_DIR: /tmp/ovpn-load-profiles
+    volumes:
+      - load_profiles:/tmp/ovpn-load-profiles
+    command: ["test_ovpn_native_connect.py"]
+
+  load-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    profiles: ["load"]
+    network_mode: host
+    environment:
+      OPENVPN_API_URL: ${OPENVPN_API_URL:-http://127.0.0.1:5009}
+      VPN_PROTO: ${VPN_PROTO:-udp}
+      CONCURRENCY: ${CONCURRENCY:-150}
+      HOLD_SECONDS: ${HOLD_SECONDS:-5}
+    command: ["test_proxy_clients.py"]
+
+  proxy-stub:
+    build:
+      context: ..
+      dockerfile: loadtests/Dockerfile.proxy-stub
+    image: local-openvpn-loadtest-stub:latest
+    profiles: ["proxy-stub"]
+    ports:
+      - "5019:5009"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      API_PORT: "5009"
+      PORT: "1194"
+      PROTO: tcp
+
+  load-proxy-stub:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    profiles: ["proxy-stub"]
+    network_mode: host
+    environment:
+      OPENVPN_API_URL: ${OPENVPN_STUB_API_URL:-http://127.0.0.1:5019}
+      CONCURRENCY: ${CONCURRENCY:-32}
+      PAYLOAD_MB: ${PAYLOAD_MB:-1}
+      PROXY_MODE: tcp
+    command: ["test_proxy_traffic_stub.py"]
+    depends_on:
+      - proxy-stub
+
+volumes:
+  load_profiles:

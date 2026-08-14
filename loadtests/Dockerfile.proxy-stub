@@ -1,0 +1,15 @@
+# Extends OpenVPN+.NET image with Python for echo-stub soak (no openvpn daemon).
+# Build context: repository root.
+ARG OPENVPN_BASE_IMAGE=local-openvpn-test:2.7.4-net10
+FROM ${OPENVPN_BASE_IMAGE}
+
+USER root
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python3 && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY loadtests /loadtests
+RUN chmod +x /loadtests/scripts/entrypoint-proxy-stub.sh
+
+ENV ASPNETCORE_ENVIRONMENT=Development
+ENTRYPOINT ["/bin/bash", "/loadtests/scripts/entrypoint-proxy-stub.sh"]

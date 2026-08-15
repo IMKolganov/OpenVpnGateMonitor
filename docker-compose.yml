@@ -54,6 +54,7 @@ services:
       # Free-tier channel subscription checks (getChatMember); same bot token as telegrambot service
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-}
       TELEGRAM_REQUIRED_CHANNEL_USERNAME: ${TELEGRAM_REQUIRED_CHANNEL_USERNAME:-DataGateVPNBot}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-DataGateVPNBot}
 
   frontend:
     image: imkolganov/datagate-monitor-frontend:latest
@@ -85,6 +86,7 @@ services:
       TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-5583}
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
       TELEGRAM_REQUIRED_CHANNEL_USERNAME: ${TELEGRAM_REQUIRED_CHANNEL_USERNAME:-DataGateVPNBot}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-DataGateVPNBot}
       HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
       AUTO_GENERATE_CERTIFICATE: ${AUTO_GENERATE_CERTIFICATE:-true}

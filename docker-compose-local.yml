@@ -216,6 +216,9 @@ services:
     ports:
       - "${XRAY_VLESS_HOST_PORT:-30443}:443"
       - "${XRAY_MANAGER_HOST_PORT:-15012}:5010"
+    # NET_ADMIN: XRAY_DNS_IDENTITY_* ip aliases (sendThrough → Pi-hole ClientIp)
+    cap_add:
+      - NET_ADMIN
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -227,8 +230,11 @@ services:
       XRayManagement__Host: "127.0.0.1"
       XRayManagement__Port: "10085"
       Backend__BaseUrl: http://host.docker.internal:5581/
+      # For Pi-hole matching: DNS1/DNS2 → Pi-hole; XRAY_DNS_IDENTITY_ENABLED=true
       DNS1: "8.8.8.8"
       DNS2: "8.8.4.4"
+      # XRAY_DNS_IDENTITY_ENABLED: "true"
+      # XRAY_DNS_IDENTITY_SUBNET: "10.80.0.0/24"
       XRAY_TRANSPORT_MODE: "${XRAY_TRANSPORT_MODE:-plain}"
 
   postgres_backend:

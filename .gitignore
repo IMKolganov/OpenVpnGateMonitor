@@ -9,3 +9,5 @@ openvpn-data-tcp
 .vs/
 backups/
 *.dump
+__pycache__/
+*.pyc

@@ -1,0 +1,2 @@
+# Optional dnsmasq snippets (e.g. extra listen-address for Xray bridge).
+# Reference host dg-vpn: directory empty — no files required for base install.

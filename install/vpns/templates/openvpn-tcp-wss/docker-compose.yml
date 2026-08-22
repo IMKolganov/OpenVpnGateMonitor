@@ -1,0 +1,36 @@
+services:
+  openvpn-tcp-wss:
+    image: imkolganov/datagate-monitor-openvpn:latest
+    pull_policy: always
+    container_name: openvpn-tcp-wss
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    volumes:
+      - ./data:/openvpn-tcp-wss
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      DNS1: ${TCP_DNS1}
+      DNS2: ${TCP_DNS2}
+      VPN_SUBNET: ${TCP_VPN_SUBNET}
+      VPN_NETMASK: ${TCP_VPN_NETMASK:-255.255.255.0}
+      EASY_RSA_PATH: "/openvpn-tcp-wss/easy-rsa"
+      DATA_DIR: /openvpn-tcp-wss
+      PORT: ${TCP_PORT}
+      API_PORT: ${TCP_API_PORT}
+      PROTO: tcp
+      OpenVpnManagement__Port: ${TCP_MANAGEMENT_PORT}
+      OpenVpnManagement__Host: "localhost"
+      BACKEND__BASEURL: ${BACKEND__BASEURL}
+      DCO: ${TCP_DCO:-true}
+      TUN_DEV: ${TCP_TUN_DEV}
+      TUN_IF: ${TCP_TUN_IF}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${TCP_API_PORT}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

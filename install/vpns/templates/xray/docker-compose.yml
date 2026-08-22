@@ -1,0 +1,49 @@
+services:
+  xray:
+    image: imkolganov/datagate-monitor-xray:latest
+    pull_policy: always
+    container_name: datagate-monitor-xray
+    restart: always
+    networks:
+      - xray_network
+    volumes:
+      # Same Let's Encrypt store as nginx-docker (ISSUE_CERTS must include XRAY_DOMAIN)
+      - ${NGINX_CERTBOT_CONF}:/etc/letsencrypt:ro
+      - ./data/xray_data:/data
+    extra_hosts:
+      # Stable docker0 gateway — Pi-hole runs in OpenVPN host netns on the host
+      - "host.docker.internal:${XRAY_HOST_GATEWAY}"
+    cap_add:
+      - NET_ADMIN
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      DATA_DIR: /data
+      XRAY__DOMAIN: ${XRAY_DOMAIN}
+      XRAY__IP: ${PUBLIC_IP}
+      Backend__BaseUrl: ${BACKEND__BASEURL}
+      XRAY_TRANSPORT_MODE: ${XRAY_TRANSPORT_MODE:-tls}
+      PORT: "443"
+      XRAY_TLS_CERT_FILE: /etc/letsencrypt/live/${XRAY_DOMAIN}/fullchain.pem
+      XRAY_TLS_KEY_FILE: /etc/letsencrypt/live/${XRAY_DOMAIN}/privkey.pem
+      # nginx stream must send PROXY protocol when this is true
+      XRAY_ACCEPT_PROXY_PROTOCOL: ${XRAY_ACCEPT_PROXY_PROTOCOL:-true}
+
+      # Pi-hole on host (OpenVPN netns) — reach via docker bridge / host.docker.internal
+      DNS1: ${XRAY_DNS1}
+      DNS2: ${XRAY_DNS2}
+      XRAY_DNS_IDENTITY_ENABLED: ${XRAY_DNS_IDENTITY_ENABLED:-true}
+      XRAY_DNS_IDENTITY_SUBNET: ${XRAY_DNS_IDENTITY_SUBNET}
+      XRAY_DNS_IDENTITY_IFACE: ${XRAY_DNS_IDENTITY_IFACE:-eth0}
+      PIHOLE_ENABLED: ${PIHOLE_ENABLED:-true}
+      PIHOLE_BASE_URL: ${XRAY_PIHOLE_BASE_URL}
+      PIHOLE_APP_PASSWORD: ${PIHOLE_WEBPASSWORD}
+      PIHOLE_CLIENT_SUBNET_PREFIX: ${XRAY_PIHOLE_CLIENT_SUBNET_PREFIX}
+      PIHOLE_CLIENT_SUBNET_EXCLUDE_PREFIXES: ${XRAY_PIHOLE_EXCLUDE_PREFIXES}
+    ports:
+      # Manager API — localhost only; nginx :9443 proxies here for dashboard
+      # Use a free host port (not OpenVPN 5010/5011)
+      - "127.0.0.1:${XRAY_MANAGER_HOST_PORT}:5010/tcp"
+
+networks:
+  xray_network:
+    driver: bridge

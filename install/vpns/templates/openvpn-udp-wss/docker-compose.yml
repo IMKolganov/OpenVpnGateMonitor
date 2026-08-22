@@ -1,0 +1,38 @@
+services:
+  openvpn-udp-wss:
+    image: imkolganov/datagate-monitor-openvpn:latest
+    pull_policy: always
+    container_name: openvpn-udp-wss
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    volumes:
+      - ./data:/openvpn-udp-wss
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      DNS1: ${UDP_DNS1}
+      DNS2: ${UDP_DNS2}
+      VPN_SUBNET: ${UDP_VPN_SUBNET}
+      VPN_NETMASK: ${UDP_VPN_NETMASK:-255.255.255.0}
+      TUN_DEV: ${UDP_TUN_DEV}
+      WAN_IF: ${UDP_WAN_IF:-eth0}
+      EASY_RSA_PATH: "/openvpn-udp-wss/easy-rsa"
+      DATA_DIR: /openvpn-udp-wss
+      PORT: ${UDP_PORT}
+      API_PORT: ${UDP_API_PORT}
+      PROTO: udp
+      DCO: ${UDP_DCO:-true}
+      CIPHER: ${UDP_CIPHER:-AES-128-GCM}
+      DATA_CIPHERS: ${UDP_DATA_CIPHERS:-AES-128-GCM:AES-256-GCM:CHACHA20-POLY1305}
+      OpenVpnManagement__Port: ${UDP_MANAGEMENT_PORT}
+      OpenVpnManagement__Host: "localhost"
+      BACKEND__BASEURL: ${BACKEND__BASEURL}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${UDP_API_PORT}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s

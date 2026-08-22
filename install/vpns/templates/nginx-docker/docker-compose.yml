@@ -1,0 +1,35 @@
+services:
+  nginx:
+    image: nginx:stable
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "${XRAY_API_HTTPS_PORT:-9443}:${XRAY_API_HTTPS_PORT:-9443}"
+    extra_hosts:
+      # Reach OpenVPN APIs on the host (network_mode: host stacks)
+      - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - xray_network
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/stream.d:/etc/nginx/stream.d:ro
+      - ./nginx/logs:/var/log/nginx
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+
+networks:
+  # Created by xray compose (or install script). Required for SNI → VLESS + :9443 API.
+  xray_network:
+    external: true
+    name: datagate-monitor-xray_xray_network

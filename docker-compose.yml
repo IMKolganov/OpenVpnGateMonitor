@@ -54,6 +54,7 @@ services:
       # Free-tier channel subscription checks (getChatMember); same bot token as telegrambot service
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-}
       TELEGRAM_REQUIRED_CHANNEL_USERNAME: ${TELEGRAM_REQUIRED_CHANNEL_USERNAME:-DataGateVPNBot}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-DataGateVPNBot}
 
   frontend:
     image: imkolganov/datagate-monitor-frontend:latest
@@ -85,6 +86,7 @@ services:
       TELEGRAMBOT_PORT: ${TELEGRAMBOT_PORT:-5583}
       TELEGRAMBOT_BOT_TOKEN: ${TELEGRAMBOT_BOT_TOKEN:-your-token}
       TELEGRAM_REQUIRED_CHANNEL_USERNAME: ${TELEGRAM_REQUIRED_CHANNEL_USERNAME:-DataGateVPNBot}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-DataGateVPNBot}
       HOST_ADDRESS: ${HOST_ADDRESS:-localhost}
       USE_CERTIFICATE: ${USE_CERTIFICATE:-true}
       AUTO_GENERATE_CERTIFICATE: ${AUTO_GENERATE_CERTIFICATE:-true}
@@ -185,6 +187,8 @@ services:
     ports:
       - "${XRAY_MANAGER_HOST_PORT:-15012}:5010"
       - "${XRAY_VLESS_HOST_PORT:-30443}:443"
+    cap_add:
+      - NET_ADMIN
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       DATA_DIR: /data
@@ -194,8 +198,11 @@ services:
       XRayManagement__Host: "127.0.0.1"
       XRayManagement__Port: "10085"
       Backend__BaseUrl: "http://backend:5581/"
-      DNS1: "8.8.8.8"
-      DNS2: "8.8.4.4"
+      # For Pi-hole matching: DNS1/DNS2 → Pi-hole; XRAY_DNS_IDENTITY_ENABLED=true; subnet 10.80.0.0/24
+      DNS1: "${DNS1:-8.8.8.8}"
+      DNS2: "${DNS2:-8.8.4.4}"
+      # XRAY_DNS_IDENTITY_ENABLED: "true"
+      # XRAY_DNS_IDENTITY_SUBNET: "10.80.0.0/24"
       XRAY_TRANSPORT_MODE: "${XRAY_TRANSPORT_MODE:-plain}"
 
   postgres_backend:

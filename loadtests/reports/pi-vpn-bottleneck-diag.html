@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pi OpenVPN — диагностика узких мест</title>
+  <style>
+    :root {
+      --bg: #0f1216;
+      --panel: #171b21;
+      --line: #2a313b;
+      --text: #e8edf4;
+      --muted: #8b97a8;
+      --accent: #5b8def;
+      --ok: #3dbe7a;
+      --warn: #d4a017;
+      --bad: #e05d5d;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 36px 24px 64px; }
+    h1 { font-size: 24px; font-weight: 600; margin: 0 0 6px; }
+    .sub { color: var(--muted); margin: 0 0 24px; }
+    h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 28px 0 10px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); padding: 16px 18px; margin-bottom: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+    .stat { background: var(--panel); border: 1px solid var(--line); padding: 14px 16px; }
+    .stat .v { font: 600 22px/1.2 var(--mono); }
+    .stat .l { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--muted); font-weight: 500; }
+    td { font-family: var(--mono); }
+    ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); }
+    ul strong { color: var(--text); }
+    code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Диагностика: туннели vs канал vs скорость</h1>
+    <p class="sub">Loadtest Pi · UDP 1296 · pre-issued .ovpn · sink 10.50.96.1:9200 · 2026-08-14</p>
+
+    <div class="grid">
+      <div class="stat"><div class="v ok">~907 Mbps</div><div class="l">LAN iperf3 (eth1 1G) — линк ок</div></div>
+      <div class="stat"><div class="v warn">~96 Mbps</div><div class="l">тот же путь через VPN N=2</div></div>
+      <div class="stat"><div class="v ok">250/250</div><div class="l">ёмкость сессий без трафика</div></div>
+      <div class="stat"><div class="v">~11%</div><div class="l">VPN от сырого LAN (CPU-bound)</div></div>
+    </div>
+
+    <div class="panel">
+      <strong>Вердикт:</strong> линк workstation↔Pi <span class="ok">не узкое место</span>
+      (iperf3 ≈907 Mbps, sink LAN ≈848 Mbps на eth1 1000).
+      Потолок ≈60–95 Mbps — это <span class="warn">OpenVPN/CPU на Pi</span> (4× Cortex-A72 @ 1.8 GHz), не гигабит.
+    </div>
+
+    <div class="panel">
+      <strong>Зачем этот тест.</strong> Channel-ramp показал, что суммарный Mbps почти не растёт, а на клиента падает.
+      Этот прогон <em>разделяет причины</em>: сырой линк vs VPN crypto, ёмкость сессий, fairness.
+    </div>
+
+    <h2>Фазы и что каждая доказывает</h2>
+    <div class="panel">
+      <table>
+        <thead>
+          <tr><th>Фаза</th><th>Что мерили</th><th>Результат</th><th>Вывод</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A · LAN→sink / iperf3</td>
+            <td>TCP без VPN (после открытия :9200)</td>
+            <td class="ok">sink 848 · iperf3 907 Mbps</td>
+            <td>Сырой линк ≈1G — <strong>не узкое место</strong></td>
+          </tr>
+          <tr>
+            <td>B · VPN N=1/2/4</td>
+            <td>Макс. fill через туннели</td>
+            <td class="ok">2→96 Mbps · 4→81 Mbps</td>
+            <td>Потолок OpenVPN/CPU ≈ <strong>80–95 Mbps</strong> (~11% от LAN)</td>
+          </tr>
+          <tr>
+            <td>C · connect-only</td>
+            <td>Сессии без трафика</td>
+            <td class="ok">100≈99% · 250=100% · <span class="bad">500=42%</span></td>
+            <td>Лимит <strong>туннелей</strong>, не Mbps</td>
+          </tr>
+          <tr>
+            <td>D · N=50 traffic</td>
+            <td>Все клиенты 12s</td>
+            <td>agg 63 · p50 3.2 Mbps</td>
+            <td>Тот же пирог, тоньше на клиента</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Что конкретно ограничено</h2>
+    <div class="panel">
+      <ul>
+        <li><strong>Канал (shared throughput):</strong> суммарно через VPN упираетесь в ≈ <strong>60–95 Mbps</strong>
+          (B: 94 при 2 потоках; D: 63 при 50; channel-ramp: 60–75 при 25–250).
+          Скорость <em>на клиента</em> падает, потому что пирог один — это не «каждый туннель деградировал сам по себе».</li>
+        <li><strong>Ёмкость сессий:</strong> без трафика стабильно <strong>250</strong>; на <strong>500</strong> уже ~40–75% connect
+          (здесь 211/500; в channel-ramp с трафиком было 384/500 — разброс от нагрузки/состояния Pi).</li>
+        <li><strong>Скорость ≠ ёмкость:</strong> N=250 connect-only 100% при почти пустом трафике;
+          при fill на N=50 agg тот же порядок, что у 2–4 жирных потоков.</li>
+        <li><strong>Линк vs CPU (добито):</strong> открыли :9200 с LAN (iptables-nft + legacy) и iperf3 :5201.
+          LAN ≈ <strong>850–907 Mbps</strong>, VPN ≈ <strong>96 Mbps</strong> → узкое место шифрование/CPU OpenVPN на Pi, не eth1.</li>
+      </ul>
+    </div>
+
+    <h2>Как читать слова</h2>
+    <div class="panel">
+      <ul>
+        <li><strong>Канал / agg Mbps</strong> — суммарные биты всех клиентов ÷ время. Это «пирог».</li>
+        <li><strong>Скорость на клиента (p50)</strong> — кусок пирога. Падает при росте N, если agg плоский.</li>
+        <li><strong>Ёмкость туннелей</strong> — сколько <code>Initialization Sequence Completed</code> без обязательного трафика.</li>
+      </ul>
+    </div>
+
+    <h2>Сырые цифры diag</h2>
+    <div class="panel">
+      <table>
+        <thead><tr><th>Run</th><th>connected</th><th>traffic_ok</th><th>agg Mbps</th><th>p50</th></tr></thead>
+        <tbody>
+          <tr><td>B_vpn1</td><td>1/1</td><td>0</td><td>—</td><td>—</td></tr>
+          <tr><td>A_lan_sink</td><td>—</td><td>—</td><td>847.9</td><td>—</td></tr>
+          <tr><td>A_iperf3_lan</td><td>—</td><td>—</td><td>907.2</td><td>—</td></tr>
+          <tr><td>B_vpn2 (повтор)</td><td>2/2</td><td>2</td><td>95.8</td><td>45.9</td></tr>
+          <tr><td>B_vpn2</td><td>2/2</td><td>2</td><td>94.3</td><td>40.3</td></tr>
+          <tr><td>B_vpn4</td><td>4/4</td><td>4</td><td>80.5</td><td>20.0</td></tr>
+          <tr><td>C_cap100</td><td>99/100</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>C_cap250</td><td>250/250</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>C_cap500</td><td>211/500</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>D_fair50</td><td>50/50</td><td>49</td><td>62.8</td><td>3.2</td></tr>
+        </tbody>
+      </table>
+      <p style="color:var(--muted);font-size:12px;margin:10px 0 0">
+        Скрипт: <code>loadtests/scripts/diag_vpn_bottleneck.sh</code> · артефакты: <code>/tmp/ovpn-diag/</code>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

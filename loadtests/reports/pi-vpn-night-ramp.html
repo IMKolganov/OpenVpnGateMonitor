@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pi OpenVPN night ramp — 250…1000</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1216;
+      --panel: #171b21;
+      --line: #2a313b;
+      --text: #e8edf4;
+      --muted: #8b97a8;
+      --accent: #5b8def;
+      --ok: #3dbe7a;
+      --warn: #d4a017;
+      --bad: #e05d5d;
+      --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 var(--sans);
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 36px 24px 64px; }
+    h1 { font-size: 24px; font-weight: 600; margin: 0 0 6px; }
+    .sub { color: var(--muted); margin: 0 0 28px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 16px 18px;
+    }
+    .stat .v { font-size: 28px; font-weight: 600; font-family: var(--mono); letter-spacing: -0.03em; }
+    .stat .l { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+    .note {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 14px 16px;
+      margin-bottom: 28px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .note strong { color: var(--text); }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 18px 18px 10px;
+    }
+    .card h2 {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+    canvas { width: 100% !important; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--muted); font-weight: 500; }
+    td { font-family: var(--mono); }
+    .caption { color: var(--muted); font-size: 12px; margin: 8px 0 4px; }
+    @media (max-width: 800px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Raspberry Pi — сколько VPN-клиентов держит</h1>
+    <p class="sub">Ночной connect-ramp 14 Aug 2026, 02:10–03:44 UTC · loadtest UDP :1296 · subnet 10.50.96.0/22 · 4 client-контейнера · prod не трогали</p>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="v ok">547</div>
+        <div class="l">Пик одновременных туннелей (N=750)</div>
+      </div>
+      <div class="stat">
+        <div class="v">472</div>
+        <div class="l">На цели 1000 (упало из‑за PKI)</div>
+      </div>
+      <div class="stat">
+        <div class="v warn">22.1</div>
+        <div class="l">load5 на пике (Pi уже в thrash)</div>
+      </div>
+      <div class="stat">
+        <div class="v">2.5 GB</div>
+        <div class="l">RAM свободно после N=1000 — не память</div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>summary.txt писал 0/0</strong> — агрегатор не распарсил JSON шардов (docker stdout). Цифры ниже собраны из <code>/tmp/pi-vpn-shard-*.json</code> и сходятся с <code>killed</code> на management: 185 / 32 / 547 / 472. Узкое место — EasyRSA (index.txt / CRL), не OpenVPN и не RAM. На N=50 ранее было 50/50 без шардинга.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Туннели: цель vs подключено vs issued</h2>
+        <canvas id="tunnels" height="120"></canvas>
+        <p class="caption">Source: shard soak JSON · 4 shards per level · SKIP_TRAFFIC=1 · hold 45s</p>
+      </div>
+      <div class="card">
+        <h2>CPU load после уровня (load1 / load5)</h2>
+        <canvas id="load" height="110"></canvas>
+        <p class="caption">Source: Pi sysctl samples after each level · 4-core Pi, load5&gt;4 = очередь</p>
+      </div>
+      <div class="card">
+        <h2>RSS loadtest процессов, MB</h2>
+        <canvas id="rss" height="110"></canvas>
+        <p class="caption">openvpn:1999564 и dotnet:1999569 · prod RSS почти не вырос</p>
+      </div>
+      <div class="card">
+        <h2>По уровням</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>N</th>
+              <th>Connected</th>
+              <th>Started</th>
+              <th>Errors</th>
+              <th>Ratio</th>
+              <th>Wall</th>
+              <th>load5 after</th>
+              <th>mem avail</th>
+              <th>mgmt killed</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h2>Шарды (connected / concurrency)</h2>
+        <table>
+          <thead>
+            <tr><th>Level</th><th>s0</th><th>s1</th><th>s2</th><th>s3</th><th>Sum</th></tr>
+          </thead>
+          <tbody id="shards"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <script>
+    const levels = ["250", "500", "750", "1000"];
+    const target = [250, 500, 750, 1000];
+    const connected = [185, 366, 547, 472];
+    const started = [185, 366, 584, 556];
+    const errors = [66, 177, 787, 1084];
+    const wall = [186, 347, 173, 142];
+    const load1 = [5.82, 5.95, 2.99, 4.75];
+    const load5 = [12.50, 13.17, 22.08, 23.25];
+    const mem = [2838, 2724, 2617, 2540];
+    const ovpnMb = [38.1, 69.9, 112.3, 112.3];
+    const dotnetMb = [244.9, 282.3, 397.7, 466.3];
+    const killed = [185, 32, 547, 472];
+    const shards = {
+      250: [48, 46, 41, 50],
+      500: [93, 98, 87, 88],
+      750: [142, 128, 134, 143],
+      1000: [144, 86, 121, 121],
+    };
+    const conc = {
+      250: [62, 62, 62, 64],
+      500: [125, 125, 125, 125],
+      750: [187, 187, 187, 189],
+      1000: [250, 250, 250, 250],
+    };
+
+    const grid = { color: "#2a313b" };
+    const ticks = { color: "#8b97a8" };
+    Chart.defaults.color = "#8b97a8";
+    Chart.defaults.font.family = "IBM Plex Sans, Segoe UI, system-ui, sans-serif";
+    Chart.defaults.borderColor = "#2a313b";
+
+    new Chart(document.getElementById("tunnels"), {
+      type: "bar",
+      data: {
+        labels: levels.map(n => "N=" + n),
+        datasets: [
+          { label: "Цель", data: target, backgroundColor: "#2a313b" },
+          { label: "Подключено", data: connected, backgroundColor: "#5b8def" },
+          { label: "Issued (started)", data: started, backgroundColor: "#3dbe7a" },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: "bottom" } },
+        scales: {
+          x: { grid: { display: false }, ticks },
+          y: { beginAtZero: true, title: { display: true, text: "Клиенты" }, grid, ticks },
+        },
+      },
+    });
+
+    new Chart(document.getElementById("load"), {
+      type: "line",
+      data: {
+        labels: levels.map(n => "after " + n),
+        datasets: [
+          { label: "load1", data: load1, borderColor: "#5b8def", tension: 0.2, fill: false },
+          { label: "load5", data: load5, borderColor: "#e05d5d", tension: 0.2, fill: false },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: "bottom" } },
+        scales: {
+          x: { grid: { display: false }, ticks },
+          y: { beginAtZero: true, title: { display: true, text: "Load average" }, grid, ticks },
+        },
+      },
+    });
+
+    new Chart(document.getElementById("rss"), {
+      type: "line",
+      data: {
+        labels: levels.map(n => "after " + n),
+        datasets: [
+          { label: "openvpn loadtest (MB)", data: ovpnMb, borderColor: "#5b8def", tension: 0.2, fill: false },
+          { label: "dotnet loadtest (MB)", data: dotnetMb, borderColor: "#d4a017", tension: 0.2, fill: false },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: "bottom" } },
+        scales: {
+          x: { grid: { display: false }, ticks },
+          y: { beginAtZero: true, title: { display: true, text: "RSS (MB)" }, grid, ticks },
+        },
+      },
+    });
+
+    document.getElementById("rows").innerHTML = levels.map((n, i) => `
+      <tr>
+        <td>${n}</td>
+        <td>${connected[i]}</td>
+        <td>${started[i]}</td>
+        <td>${errors[i]}</td>
+        <td>${(connected[i] / target[i] * 100).toFixed(0)}%</td>
+        <td>${wall[i]}s</td>
+        <td>${load5[i].toFixed(1)}</td>
+        <td>${mem[i]} MB</td>
+        <td>${killed[i]}</td>
+      </tr>`).join("");
+
+    document.getElementById("shards").innerHTML = levels.map(n => {
+      const s = shards[n], c = conc[n];
+      return `<tr>
+        <td>N=${n}</td>
+        ${s.map((v, i) => `<td>${v}/${c[i]}</td>`).join("")}
+        <td>${s.reduce((a,b)=>a+b,0)}</td>
+      </tr>`;
+    }).join("");
+  </script>
+</body>
+</html>

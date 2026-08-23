@@ -1,0 +1,52 @@
+# Parallel Dev OpenVPN stack for load tests on Raspberry Pi.
+# Does NOT touch production openvpn_udp (1194 / 5010 / 10.50.29.0).
+#
+# On Pi:
+#   docker compose -f docker-compose.yml up -d
+# From workstation:
+#   BACKEND_URL=http://192.168.0.9:5581
+#   OPENVPN_API_URL=http://192.168.0.2:5011
+#   VPN_HOST=192.168.0.2 VPN_PORT=1296
+
+name: openvpn-loadtest
+
+services:
+  openvpn_udp_loadtest:
+    image: imkolganov/datagate-monitor-openvpn:latest
+    pull_policy: never
+    container_name: openvpn_udp_loadtest
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    volumes:
+      - openvpn_loadtest_data:/openvpn-loadtest
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DATA_DIR: /openvpn-loadtest
+      EASY_RSA_PATH: /openvpn-loadtest/easy-rsa
+      PORT: "1296"
+      API_PORT: "5011"
+      PROTO: udp
+      OpenVpnManagement__Host: localhost
+      OpenVpnManagement__Port: "5096"
+      # Workstation DevAuth (must be reachable from Pi)
+      BACKEND__BASEURL: "http://192.168.0.9:5581/"
+      WAN_IF: eth1
+      # /22 (~1022 clients) — /24 only fits ~250 concurrent tunnels
+      VPN_SUBNET: "10.50.96.0"
+      VPN_NETMASK: "255.255.252.0"
+      DNS1: 8.8.8.8
+      DNS2: 1.1.1.1
+      OVPN_ISSUANCE_WAIT_TIMEOUT_SECONDS: "120"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:5011/api/info"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  openvpn_loadtest_data:

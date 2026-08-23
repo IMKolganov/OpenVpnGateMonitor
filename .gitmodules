@@ -13,3 +13,6 @@
 [submodule "xray"]
 	path = xray
 	url = https://github.com/IMKolganov/DataGateXRayManager
+[submodule "install/vpns"]
+	path = install/vpns
+	url = https://github.com/IMKolganov/DataGateVpnInstall.git
